@@ -1,12 +1,10 @@
 package Servlet;
 
-import DTO.ProductDTO;
-import DTO.ProductUpdateDTO;
-import Model.Product;
-import Service.ProductService;
+import DTO.VendorDTO;
+import Model.Vendor;
+import Service.VendorService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.json.JSONObject;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,51 +12,31 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet("/products/*")
-public class ProductServlet extends HttpServlet {
-
-    private final ProductService productService = new ProductService();
+@WebServlet("/vendors/*")
+public class VendorServlet extends HttpServlet {
     private final Gson gson = new Gson();
+    private final VendorService vendorService = new VendorService();
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request , HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String path = request.getPathInfo();
-        if (path == null) path = "";
+        if(path == null) path = "";
 
-        switch (path) {
-            case "/getALlProducts":
-                handleGetAllProducts(request, response);
+        switch (path){
+            case "/getAllVendors":
+                handleGetAllVendors(request,response);
                 break;
-            case "/getProduct":
-                handleGetProduct(request, response);
+            case "/getVendor":
+                handleGetVendor(request,response);
                 break;
             default:
                 invalidEndPoint(response, path);
         }
     }
 
-    private void handleGetAllProducts(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        JsonObject json = new JsonObject();
-        try {
-            List<Product> products = productService.getAllProducts();
-            json.addProperty("status", "success");
-            json.addProperty("message", "Products retrieved successfully");
-            json.add("products", gson.toJsonTree(products));
-            response.setStatus(HttpServletResponse.SC_OK);
-        } catch (Exception e) {
-            json.addProperty("status", "error");
-            json.addProperty("message", "Error retrieving products");
-            json.addProperty("error", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-        response.getWriter().println(gson.toJson(json));
-    }
-
-    private void handleGetProduct(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleGetVendor(HttpServletRequest request, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
             JsonObject requestBody = gson.fromJson(request.getReader(), JsonObject.class);
@@ -68,11 +46,11 @@ public class ProductServlet extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             } else {
                 int id = requestBody.get("id").getAsInt();
-                Product product = productService.getProductById(id);
-                if (product != null) {
+                Vendor vendor = vendorService.getVendorById(id);
+                if (vendor != null) {
                     json.addProperty("status", "success");
-                    json.addProperty("message", "Product found");
-                    json.add("product", gson.toJsonTree(product));
+                    json.addProperty("message", "Vendor found");
+                    json.add("vendor", gson.toJsonTree(vendor));
                     response.setStatus(HttpServletResponse.SC_OK);
                 } else {
                     json.addProperty("status", "not_found");
@@ -89,76 +67,89 @@ public class ProductServlet extends HttpServlet {
         response.getWriter().println(gson.toJson(json));
     }
 
+    private void handleGetAllVendors(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        JsonObject json = new JsonObject();
+        try {
+            List<Vendor> vendors = vendorService.getAllVendors();
+            json.addProperty("status", "success");
+            json.addProperty("message", "Vendors retrieved successfully");
+            json.add("vendors", gson.toJsonTree(vendors));
+            response.setStatus(HttpServletResponse.SC_OK);
+        } catch (Exception e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Error retrieving vendors");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        response.getWriter().println(gson.toJson(json));
+    }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String path = request.getPathInfo();
-        if (path == null) path = "";
+        if(path == null) path = "";
 
-        if (!path.equals("/createProduct")) {
+        if(!path.equals("/createVendor")){
             invalidEndPoint(response, path);
-            return;
         }
-
-        JSONObject jsonObject = new JSONObject();
-        try {
-            ProductDTO productDTO = gson.fromJson(request.getReader(), ProductDTO.class);
-            if (productService.addProduct(productDTO)) {
+        JsonObject json = new JsonObject();
+        try{
+            VendorDTO dto = gson.fromJson(request.getReader(),VendorDTO.class);
+            System.out.println("Cutomer Insertion : " + dto.toString());
+            if(vendorService.createVendor(dto)){
                 response.setStatus(HttpServletResponse.SC_CREATED);
-                jsonObject.put("status", "success");
-                jsonObject.put("message", "Product created!");
+                json.addProperty("status", "success");
+                json.addProperty("message", "Vendor created!");
             } else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                jsonObject.put("status", "error");
-                jsonObject.put("message", "Failed to create product!");
+                json.addProperty("status", "error");
+                json.addProperty("message", "Failed to create Vendor!");
             }
-        } catch (SQLException e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
-            jsonObject.put("status", "error");
-            jsonObject.put("message", "Database error: " + e.getMessage());
-        } catch (Exception e) {
+        }catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
-            jsonObject.put("status", "error");
-            jsonObject.put("message", "Invalid input: " + e.getMessage());
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid input: " + e.getMessage());
         }
 
         try (PrintWriter out = response.getWriter()) {
-            out.print(jsonObject.toString());
+            out.print(gson.toJson(json));
             out.flush();
         }
     }
 
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doPut(HttpServletRequest request,HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String path = request.getPathInfo();
         if (path == null) path = "";
 
-        if (!path.equals("/updateProduct")) {
+        if (!path.equals("/updateVendor")) {
             invalidEndPoint(response, path);
             return;
         }
 
         JsonObject json = new JsonObject();
         try {
-            ProductUpdateDTO dto = gson.fromJson(request.getReader(), ProductUpdateDTO.class);
-            if (dto.getId() == null) {
+            Vendor vendor = gson.fromJson(request.getReader(), Vendor.class);
+            if (vendor.getId() == null) {
                 json.addProperty("status", "error");
                 json.addProperty("message", "Missing 'id' in request");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             } else {
-                if (productService.updateProduct(dto)) {
+
+                if (vendorService.updateVendor(vendor)) {
                     json.addProperty("status", "success");
-                    json.addProperty("message", "Product updated successfully");
+                    json.addProperty("message", "Vendor updated successfully");
                     response.setStatus(HttpServletResponse.SC_OK);
                 } else {
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND); // 404
                     json.addProperty("status", "error");
-                    json.addProperty("message", "Product not found or no fields to update");
+                    json.addProperty("message", "Vendor not found or no fields to update");
                 }
             }
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
             json.addProperty("status", "error");
-            json.addProperty("message", "Failed to process update");
+            json.addProperty("message", "Failed to process vendor update");
             json.addProperty("error", e.getMessage());
         }
 
@@ -175,13 +166,12 @@ public class ProductServlet extends HttpServlet {
         if (path == null) path = "";
 
         JsonObject json = new JsonObject();
-        if (!path.equals("/deleteProduct")) {
+        if (!path.equals("/deleteVendor")) {
             invalidEndPoint(response, path);
             return;
         }
-        JsonObject requestBody = gson.fromJson(request.getReader(), JsonObject.class);
-
-        if (!requestBody.has("id") || requestBody.get("id").isJsonNull()) {
+        Vendor vendor = gson.fromJson(request.getReader(),Vendor.class);
+        if (vendor.getId() == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             JsonObject errorJson = new JsonObject();
             errorJson.addProperty("status", "error");
@@ -190,16 +180,16 @@ public class ProductServlet extends HttpServlet {
             return;
         }
 
-        int id = requestBody.get("id").getAsInt();
+        int id = vendor.getId();
         try {
-            if (productService.deleteProduct(id)) {
+            if (vendorService.deleteVendor(id)) {
                 json.addProperty("status", "success");
-                json.addProperty("message", "Product deleted successfully");
+                json.addProperty("message", "Vendor deleted successfully");
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND); // 404
                 json.addProperty("status", "error");
-                json.addProperty("message", "Product with given id not found");
+                json.addProperty("message", "Vendor with given id not found");
             }
 
         } catch (Exception e) {
@@ -223,4 +213,5 @@ public class ProductServlet extends HttpServlet {
         errorJson.addProperty("message", "Invalid endpoint : " + path);
         response.getWriter().println(errorJson);
     }
+
 }
