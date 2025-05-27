@@ -12,44 +12,32 @@ public class ProductService {
 
     private final ProductDAO productDAO = new ProductDAO();
 
-    public int addProduct(ProductDTO dto) throws SQLException {
-        Product product = new Product();
-        product.setName(dto.getName());
-        product.setCostPrice(dto.getCostPrice());
-        product.setSellingPrice(dto.getSellingPrice());
-        product.setStockInHand(dto.getStockInHand());
-        product.setCommittedStock(dto.getCommittedStock());
-        product.setOrderedStock(dto.getOrderedStock());
-        product.setOpeningStock(dto.getOpeningStock());
-        return productDAO.save(product);
-    }
+    public boolean addProduct(ProductDTO productDTO) throws SQLException {
+        Product product = new Product.Builder()
+                .id(productDTO.getId())
+                .name(productDTO.getName())
+                .cost_price(productDTO.getCost_price())
+                .selling_price(productDTO.getSelling_price())
+                .opening_stock(productDTO.getOpening_stock())
+                .stock_in_hand(productDTO.getOpening_stock()) //stock in hand = opening stock during product creation
+                .build();
 
-    public Product getProduct(int id) throws SQLException {
-        return productDAO.getById(id);
+        return productDAO.insert(product);
     }
 
     public List<Product> getAllProducts() throws SQLException {
-        return productDAO.getAll();
+        return productDAO.getAllRows();
     }
 
-    public boolean updateProduct(int id, ProductDTO dto) throws SQLException {
-        Product product = new Product();
-        product.setId(id);
-        product.setName(dto.getName());
-        product.setCostPrice(dto.getCostPrice());
-        product.setSellingPrice(dto.getSellingPrice());
-        product.setStockInHand(dto.getStockInHand());
-        product.setCommittedStock(dto.getCommittedStock());
-        product.setOrderedStock(dto.getOrderedStock());
-        product.setOpeningStock(dto.getOpeningStock());
-        return productDAO.update(product);
+    public Product getProductById(int id) throws SQLException {
+        return productDAO.findProduct(id);
+    }
+
+    public boolean updateProduct(ProductUpdateDTO dto) throws SQLException {
+        return productDAO.updateProduct(dto);
     }
 
     public boolean deleteProduct(int id) throws SQLException {
-        return productDAO.delete(id);
-    }
-
-    public boolean partialUpdateProduct(int id, ProductUpdateDTO dto) throws SQLException {
-        return productDAO.partialUpdate(id, dto);
+        return productDAO.deleteProduct(id);
     }
 }
