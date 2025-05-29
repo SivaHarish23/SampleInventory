@@ -5,6 +5,7 @@ import DTO.ProductDTO;
 import DTO.ProductUpdateDTO;
 import Model.Product;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -14,12 +15,10 @@ public class ProductService {
 
     public boolean addProduct(ProductDTO productDTO) throws SQLException {
         Product product = new Product.Builder()
-                .id(productDTO.getId())
                 .name(productDTO.getName())
                 .cost_price(productDTO.getCost_price())
                 .selling_price(productDTO.getSelling_price())
-                .opening_stock(productDTO.getOpening_stock())
-                .stock_in_hand(productDTO.getOpening_stock()) //stock in hand = opening stock during product creation
+                .opening_stock(productDTO.getOpening_stock())//stock in hand = opening stock during product creation
                 .build();
 
         return productDAO.insert(product);
@@ -40,4 +39,5 @@ public class ProductService {
     public boolean deleteProduct(int id) throws SQLException {
         return productDAO.deleteProduct(id);
     }
+
 }

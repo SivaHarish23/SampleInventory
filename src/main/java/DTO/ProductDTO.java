@@ -3,34 +3,28 @@ package DTO;
 import java.math.BigDecimal;
 
 public class ProductDTO {
-    private int id;
+    private Integer id;
     private String name;
     private BigDecimal cost_price;
     private BigDecimal selling_price;
-    private int stock_in_hand;
-    private int committed_stock;
-    private int ordered_stock;
-    private int opening_stock;
+    private Integer opening_stock;
 
     public ProductDTO() {
     }
 
-    public ProductDTO(int id, String name, BigDecimal cost_price, BigDecimal selling_price, int stock_in_hand, int committed_stock, int ordered_stock, int opening_stock) {
+    public ProductDTO(Integer id, String name, BigDecimal cost_price, BigDecimal selling_price, Integer opening_stock) {
         this.id = id;
         this.name = name;
         this.cost_price = cost_price;
         this.selling_price = selling_price;
-        this.stock_in_hand = stock_in_hand;
-        this.committed_stock = committed_stock;
-        this.ordered_stock = ordered_stock;
         this.opening_stock = opening_stock;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -58,35 +52,11 @@ public class ProductDTO {
         this.selling_price = selling_price;
     }
 
-    public int getStock_in_hand() {
-        return stock_in_hand;
-    }
-
-    public void setStock_in_hand(int stock_in_hand) {
-        this.stock_in_hand = stock_in_hand;
-    }
-
-    public int getCommitted_stock() {
-        return committed_stock;
-    }
-
-    public void setCommitted_stock(int committed_stock) {
-        this.committed_stock = committed_stock;
-    }
-
-    public int getOrdered_stock() {
-        return ordered_stock;
-    }
-
-    public void setOrdered_stock(int ordered_stock) {
-        this.ordered_stock = ordered_stock;
-    }
-
-    public int getOpening_stock() {
+    public Integer getOpening_stock() {
         return opening_stock;
     }
 
-    public void setOpening_stock(int opening_stock) {
+    public void setOpening_stock(Integer opening_stock) {
         this.opening_stock = opening_stock;
     }
 
@@ -97,9 +67,6 @@ public class ProductDTO {
                 ", name='" + name + '\'' +
                 ", cost_price=" + cost_price +
                 ", selling_price=" + selling_price +
-                ", stock_in_hand=" + stock_in_hand +
-                ", committed_stock=" + committed_stock +
-                ", ordered_stock=" + ordered_stock +
                 ", opening_stock=" + opening_stock +
                 '}';
     }
