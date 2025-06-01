@@ -29,19 +29,15 @@ public class CustomerServlet extends HttpServlet {
         } else {
             // GET /customers/{id} – Retrieve customer by ID
             String idStr = pathInfo.substring(1); // Remove leading '/'
-            try {
-                int id = Integer.parseInt(idStr);
-                handleGetCustomer(id, response);
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            }
+            handleGetCustomer(idStr, response);
         }
     }
 
     private void handleGetAllCustomers(HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            List<Customer> customers = customerService.getAllCustomers();
+//            List<Customer> customers = customerService.getAllCustomers();
+            List<CustomerDTO> customers = customerService.getAll();
             json.addProperty("status", "success");
             json.addProperty("message", "Customers retrieved successfully");
             json.add("customers", gson.toJsonTree(customers));
@@ -55,10 +51,10 @@ public class CustomerServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
-    private void handleGetCustomer(int id, HttpServletResponse response) throws IOException {
+    private void handleGetCustomer(String id, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            Customer customer = customerService.getCustomerById(id);
+            CustomerDTO customer = customerService.getPartyById(id);
             if (customer != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer found");
@@ -93,10 +89,12 @@ public class CustomerServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
-            if (customerService.createCustomer(customerDTO)) {
+            customerDTO = customerService.createParty(customerDTO);
+            if (customerDTO != null) {
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer created!");
+                json.add("customer", gson.toJsonTree(customerDTO));
             } else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 json.addProperty("status", "error");
@@ -122,28 +120,22 @@ public class CustomerServlet extends HttpServlet {
             return;
         }
 
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            return;
-        }
+        String id = pathInfo.substring(1);
 
         JsonObject json = new JsonObject();
         try {
-            Customer customer = gson.fromJson(request.getReader(), Customer.class);
-            if (customer == null) {
+            CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
+            if (customerDTO == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
                 return;
             }
             // Ensure customer ID matches path ID
-            customer.setId(id);
-
-            if (customerService.updateCustomer(customer)) {
+            customerDTO.setId(id);
+            customerDTO = customerService.updateParty(customerDTO);
+            if (customerDTO != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer updated successfully");
+                json.add("customer",gson.toJsonTree(customerDTO));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
@@ -160,46 +152,46 @@ public class CustomerServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // DELETE /customers/{id} – Delete customer by ID
-        response.setContentType("application/json");
-        String pathInfo = request.getPathInfo();
-
-        if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Customer ID is missing in URL");
-            return;
-        }
-
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            return;
-        }
-
-        JsonObject json = new JsonObject();
-        try {
-            if (customerService.deleteCustomer(id)) {
-                json.addProperty("status", "success");
-                json.addProperty("message", "Customer deleted successfully");
-                response.setStatus(HttpServletResponse.SC_OK);
-            } else {
-                json.addProperty("status", "error");
-                json.addProperty("message", "Customer with given ID not found");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            }
-        } catch (Exception e) {
-            json.addProperty("status", "error");
-            json.addProperty("message", "Failed to process deletion");
-            json.addProperty("error", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-
-        writeResponse(response, json);
-    }
+//    @Override
+//    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        // DELETE /customers/{id} – Delete customer by ID
+//        response.setContentType("application/json");
+//        String pathInfo = request.getPathInfo();
+//
+//        if (pathInfo == null || pathInfo.equals("/")) {
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Customer ID is missing in URL");
+//            return;
+//        }
+//
+//        String idStr = pathInfo.substring(1);
+//        int id;
+//        try {
+//            id = Integer.parseInt(idStr);
+//        } catch (NumberFormatException e) {
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
+//            return;
+//        }
+//
+//        JsonObject json = new JsonObject();
+//        try {
+//            if (customerService.deleteCustomer(id)) {
+//                json.addProperty("status", "success");
+//                json.addProperty("message", "Customer deleted successfully");
+//                response.setStatus(HttpServletResponse.SC_OK);
+//            } else {
+//                json.addProperty("status", "error");
+//                json.addProperty("message", "Customer with given ID not found");
+//                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+//            }
+//        } catch (Exception e) {
+//            json.addProperty("status", "error");
+//            json.addProperty("message", "Failed to process deletion");
+//            json.addProperty("error", e.getMessage());
+//            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//        }
+//
+//        writeResponse(response, json);
+//    }
 
     private void sendError(HttpServletResponse response, int statusCode, String message) throws IOException {
         response.setStatus(statusCode);

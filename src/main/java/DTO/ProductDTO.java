@@ -3,28 +3,82 @@ package DTO;
 import java.math.BigDecimal;
 
 public class ProductDTO {
-    private Integer id;
+    private String id; // e.g., "PRO-1"
     private String name;
     private BigDecimal cost_price;
     private BigDecimal selling_price;
     private Integer opening_stock;
+    private String created_at;  // formatted datetime string
+    private String updated_at;  // formatted datetime string
 
-    public ProductDTO() {
+    public ProductDTO() {}
+
+    private ProductDTO(Builder builder) {
+        this.id = builder.id;
+        this.name = builder.name;
+        this.cost_price = builder.cost_price;
+        this.selling_price = builder.selling_price;
+        this.opening_stock = builder.opening_stock;
+        this.created_at = builder.created_at;
+        this.updated_at = builder.updated_at;
     }
 
-    public ProductDTO(Integer id, String name, BigDecimal cost_price, BigDecimal selling_price, Integer opening_stock) {
-        this.id = id;
-        this.name = name;
-        this.cost_price = cost_price;
-        this.selling_price = selling_price;
-        this.opening_stock = opening_stock;
+    public static class Builder {
+        private String id;
+        private String name;
+        private BigDecimal cost_price;
+        private BigDecimal selling_price;
+        private Integer opening_stock;
+        private String created_at;
+        private String updated_at;
+
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder cost_price(BigDecimal cost_price) {
+            this.cost_price = cost_price;
+            return this;
+        }
+
+        public Builder selling_price(BigDecimal selling_price) {
+            this.selling_price = selling_price;
+            return this;
+        }
+
+        public Builder opening_stock(Integer opening_stock) {
+            this.opening_stock = opening_stock;
+            return this;
+        }
+
+        public Builder created_at(String created_at) {
+            this.created_at = created_at;
+            return this;
+        }
+
+        public Builder updated_at(String updated_at) {
+            this.updated_at = updated_at;
+            return this;
+        }
+
+        public ProductDTO build() {
+            return new ProductDTO(this);
+        }
     }
 
-    public Integer getId() {
+    // Getters and Setters
+
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -60,14 +114,32 @@ public class ProductDTO {
         this.opening_stock = opening_stock;
     }
 
+    public String getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
+    }
+
+    public String getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(String updated_at) {
+        this.updated_at = updated_at;
+    }
+
     @Override
     public String toString() {
         return "ProductDTO{" +
-                "id=" + id +
+                "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", cost_price=" + cost_price +
                 ", selling_price=" + selling_price +
                 ", opening_stock=" + opening_stock +
+                ", created_at='" + created_at + '\'' +
+                ", updated_at='" + updated_at + '\'' +
                 '}';
     }
 }

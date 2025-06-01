@@ -1,18 +1,13 @@
 package Servlet;
 
-import DAO.BillItemDAO;
-import DAO.PurchaseBillDAO;
-import DTO.ProductUpdateDTO;
 import DTO.PurchaseBillDTO;
-import Service.BillingService;
-import Service.BillingServiceImpl;
+import Service.PurchaseBillService;
+import Service.PurchaseBillServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -20,9 +15,66 @@ import java.util.List;
 
 @WebServlet("/purchaseBill/*")
 public class PurchaseBillServlet extends HttpServlet {
-    private final Gson gson = new Gson();
-    private final BillingService billingService = new BillingServiceImpl(new PurchaseBillDAO(), null,new BillItemDAO());
 
+    private final Gson gson = new Gson();
+    private final PurchaseBillServiceImpl purchaseBillService = new PurchaseBillServiceImpl();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+        String pathInfo = request.getPathInfo();
+
+        if (pathInfo == null || pathInfo.equals("/")) {
+            handleGetAllBills(response);
+        } else {
+            handleGetBillById(pathInfo.substring(1), response);
+        }
+    }
+
+    private void handleGetAllBills(HttpServletResponse response) throws IOException {
+        JsonObject json = new JsonObject();
+        try {
+            List<PurchaseBillDTO> allBills = purchaseBillService.getAllPurchaseBills();
+            json.addProperty("status", "success");
+            json.addProperty("message", "Purchase bills retrieved successfully.");
+            json.add("bills", gson.toJsonTree(allBills));
+            response.setStatus(HttpServletResponse.SC_OK);
+        } catch (Exception e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Error retrieving purchase bills.");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        writeResponse(response, json);
+    }
+
+    private void handleGetBillById(String idStr, HttpServletResponse response) throws IOException {
+        JsonObject json = new JsonObject();
+        try {
+            PurchaseBillDTO bill = purchaseBillService.getPurchaseBillById(idStr);
+            if (bill != null) {
+                json.addProperty("status", "success");
+                json.addProperty("message", "Purchase bill found.");
+                json.add("bill", gson.toJsonTree(bill));
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                json.addProperty("status", "not_found");
+                json.addProperty("message", "Purchase bill not found for ID: " + idStr);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid bill ID format.");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        } catch (Exception e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Error retrieving purchase bill.");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        writeResponse(response, json);
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -34,59 +86,27 @@ public class PurchaseBillServlet extends HttpServlet {
             return;
         }
 
+        JsonObject json = new JsonObject();
         try {
-            PurchaseBillDTO purchaseBillDTO = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
-            int purchaseBillId = billingService.createPurchaseBill(purchaseBillDTO);
-
-            JsonObject jsonResponse = new JsonObject();
-            jsonResponse.addProperty("status", "success");
-            jsonResponse.addProperty("message", "Purchase bill created successfully.");
-            jsonResponse.addProperty("bill_id", purchaseBillId);
+            PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
+            System.out.println(dto.toString());
+            dto = purchaseBillService.createPurchaseBill(dto);
             response.setStatus(HttpServletResponse.SC_CREATED);
-            writeResponse(response, jsonResponse);
+            json.addProperty("status", "success");
+            json.addProperty("message", "Purchase bill created successfully.");
+            json.add("bill", gson.toJsonTree(dto));
         } catch (SQLException e) {
-            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Database error");
+            json.addProperty("error", e.getMessage());
         } catch (Exception e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid input: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid input");
+            json.addProperty("error", e.getMessage());
         }
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json");
-        String pathInfo = request.getPathInfo();
-
-        if (pathInfo == null || pathInfo.equals("/")) {
-            try {
-                List<PurchaseBillDTO> allBills = billingService.getAllPurchaseBills();
-                JsonObject jsonResponse = new JsonObject();
-                jsonResponse.addProperty("status", "success");
-                jsonResponse.add("bills", gson.toJsonTree(allBills));
-                response.setStatus(HttpServletResponse.SC_OK);
-                writeResponse(response, jsonResponse);
-            } catch (Exception e) {
-                sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving purchase bills: " + e.getMessage());
-            }
-        } else {
-            String idStr = pathInfo.substring(1);
-            try {
-                int id = Integer.parseInt(idStr);
-                PurchaseBillDTO bill = billingService.getPurchaseBill(id);
-                if (bill != null) {
-                    JsonObject jsonResponse = new JsonObject();
-                    jsonResponse.addProperty("status", "success");
-                    jsonResponse.add("bill", gson.toJsonTree(bill));
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    writeResponse(response, jsonResponse);
-                } else {
-                    sendError(response, HttpServletResponse.SC_NOT_FOUND, "Purchase bill not found for ID: " + id);
-                }
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid purchase bill ID format");
-            } catch (Exception e) {
-                sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving purchase bill: " + e.getMessage());
-            }
-        }
+        writeResponse(response, json);
     }
 
     @Override
@@ -94,31 +114,41 @@ public class PurchaseBillServlet extends HttpServlet {
         response.setContentType("application/json");
         String pathInfo = request.getPathInfo();
 
+        JsonObject json = new JsonObject();
+
         if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Purchase bill ID is missing in URL");
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Purchase bill ID is required in URL");
             return;
         }
-
-        String idStr = pathInfo.substring(1);
+        String id = pathInfo.substring(1);
         try {
-            int id = Integer.parseInt(idStr);
             PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
+            System.out.println(dto.toString());
             dto.setId(id);
+            dto = purchaseBillService.updatePurchaseBill(dto);
 
-            if (billingService.updatePurchaseBill(dto)) {
-                JsonObject jsonResponse = new JsonObject();
-                jsonResponse.addProperty("status", "success");
-                jsonResponse.addProperty("message", "Purchase bill updated successfully");
+            if (dto != null) {
+                json.addProperty("status", "success");
+                json.addProperty("message", "Purchase bill updated successfully.");
+                json.add("bill",gson.toJsonTree(dto));
                 response.setStatus(HttpServletResponse.SC_OK);
-                writeResponse(response, jsonResponse);
             } else {
-                sendError(response, HttpServletResponse.SC_NOT_FOUND, "Purchase bill not found or no fields to update");
+                json.addProperty("status", "not_found");
+                json.addProperty("message", "Purchase bill not found or no changes made.");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
         } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid purchase bill ID format");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid bill ID format.");
+            json.addProperty("error", e.getMessage());
         } catch (Exception e) {
-            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to process update: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Failed to update bill.");
+            json.addProperty("error", e+"");
         }
+        writeResponse(response, json);
     }
 
     @Override
@@ -127,56 +157,41 @@ public class PurchaseBillServlet extends HttpServlet {
         String pathInfo = request.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Endpoint is missing in URL");
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing endpoint or bill ID");
             return;
         }
 
-        String[] pathParts = pathInfo.substring(1).split("/");
-        if (pathParts.length == 1) {
-            try {
-                int id = Integer.parseInt(pathParts[0]);
-                if (billingService.deletePurchaseBill(id)) {
-                    JsonObject jsonResponse = new JsonObject();
-                    jsonResponse.addProperty("status", "success");
-                    jsonResponse.addProperty("message", "Purchase bill deleted successfully");
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    writeResponse(response, jsonResponse);
-                } else {
-                    sendError(response, HttpServletResponse.SC_NOT_FOUND, "Purchase bill with given ID not found");
-                }
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid purchase bill ID format");
-            } catch (Exception e) {
-                sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to process deletion: " + e.getMessage());
+
+        JsonObject json = new JsonObject();
+        String idStr = pathInfo.substring(1);
+
+        try {
+            if (purchaseBillService.deletePurchaseBill(idStr)) {
+                json.addProperty("status", "success");
+                json.addProperty("message", "Purchase Bill deleted successfully");
+                json.addProperty("bill_id", idStr);
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                json.addProperty("status", "error");
+                json.addProperty("message", "Purchase Bill not found for ID: " + idStr);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } else if (pathParts.length == 2 && pathParts[0].equals("item")) {
-            try {
-                int billItemId = Integer.parseInt(pathParts[1]);
-                if (billingService.deleteBillItemForBill(billItemId)) {
-                    JsonObject jsonResponse = new JsonObject();
-                    jsonResponse.addProperty("status", "success");
-                    jsonResponse.addProperty("message", "Purchase bill item deleted successfully");
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    writeResponse(response, jsonResponse);
-                } else {
-                    sendError(response, HttpServletResponse.SC_NOT_FOUND, "Purchase bill item with given ID not found");
-                }
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid bill item ID format");
-            } catch (Exception e) {
-                sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to process deletion: " + e.getMessage());
-            }
-        } else {
-            sendError(response, HttpServletResponse.SC_NOT_FOUND, "Invalid endpoint");
+        } catch (Exception e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Failed to process Purchase Bill deletion");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+
+        writeResponse(response, json);
     }
 
     private void sendError(HttpServletResponse response, int statusCode, String message) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("status", "error");
+        json.addProperty("message", message);
         response.setStatus(statusCode);
-        JsonObject errorJson = new JsonObject();
-        errorJson.addProperty("status", "error");
-        errorJson.addProperty("message", message);
-        writeResponse(response, errorJson);
+        writeResponse(response, json);
     }
 
     private void writeResponse(HttpServletResponse response, JsonObject json) throws IOException {

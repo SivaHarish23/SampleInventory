@@ -12,7 +12,6 @@ import java.util.List;
 
 public class ReportDAO {
 
-
     public List<StockReportDTO> getStockAvailability() throws SQLException {
         String query =
                 "SELECT p.id, p.name, " +
@@ -51,7 +50,7 @@ public class ReportDAO {
     public BigDecimal getOverallStockValue() throws SQLException {
         String query = "SELECT \n" +
                 "    SUM(stock_value) AS OverallStockValue\n" +
-                "FROM (\n" +
+                "       FROM (\n" +
                 "    SELECT \n" +
                 "        ((p.opening_stock + \n" +
                 "          IFNULL((\n" +
@@ -180,8 +179,5 @@ public class ReportDAO {
         return list;
 
     }
-
-
-
 }
 

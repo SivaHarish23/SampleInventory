@@ -1,44 +1,25 @@
 package Model;
 
-import DTO.PurchaseBillDTO;
-import Util.TimeUtil;
-
 import java.math.BigDecimal;
 
-public class PurchaseBill {
+public class SalesInvoice {
     private Integer id;
-    private Long bill_date;
-    private Integer vendor_id;
+    private Long invoice_date;
+    private Integer customer_id;
     private BigDecimal amount;
     private Integer status;
     private String notes;
     private Long created_at;
     private Long updated_at;
 
-    public PurchaseBill(PurchaseBillDTO dto){
-        this.id = dto.getId() == null ? 0 : Integer.parseInt(dto.getId().substring(4));
-        this.bill_date = TimeUtil.stringToEpoch(dto.getBill_date());
-        this.vendor_id = Integer.parseInt(dto.getVendor_id().substring(4));
-        this.amount = dto.getAmount();
-        this.status = getStatus(dto.getStatus());
-        this.notes = dto.getNotes();
-        this.created_at = TimeUtil.stringToEpoch(dto.getCreated_at());
-        this.updated_at = TimeUtil.stringToEpoch(dto.getUpdated_at());
-    }
-
-    private Integer getStatus(String status){
-        switch (status){
-            case "PAID": return 0;
-            case "RECIEVED": return 1;
-        }
-        return -1;
+    public SalesInvoice() {
     }
 
     // Private constructor used by the Builder
-    private PurchaseBill(Builder builder) {
+    private SalesInvoice(Builder builder) {
         this.id = builder.id;
-        this.bill_date = builder.bill_date;
-        this.vendor_id = builder.vendor_id;
+        this.invoice_date = builder.invoice_date;
+        this.customer_id = builder.customer_id;
         this.amount = builder.amount;
         this.status = builder.status;
         this.notes = builder.notes;
@@ -46,17 +27,17 @@ public class PurchaseBill {
         this.updated_at = builder.updated_at;
     }
 
-    // Getters for the fields
+    // Getters
     public Integer getId() {
         return id;
     }
 
-    public Long getBill_date() {
-        return bill_date;
+    public Long getInvoice_date() {
+        return invoice_date;
     }
 
-    public Integer getVendor_id() {
-        return vendor_id;
+    public Integer getCustomer_id() {
+        return customer_id;
     }
 
     public BigDecimal getAmount() {
@@ -82,8 +63,8 @@ public class PurchaseBill {
     // Builder class
     public static class Builder {
         private Integer id;
-        private Long bill_date;
-        private Integer vendor_id;
+        private Long invoice_date;
+        private Integer customer_id;
         private BigDecimal amount;
         private Integer status;
         private String notes;
@@ -95,13 +76,13 @@ public class PurchaseBill {
             return this;
         }
 
-        public Builder setBill_date(Long bill_date) {
-            this.bill_date = bill_date;
+        public Builder setInvoice_date(Long invoice_date) {
+            this.invoice_date = invoice_date;
             return this;
         }
 
-        public Builder setVendor_id(Integer vendor_id) {
-            this.vendor_id = vendor_id;
+        public Builder setCustomer_id(Integer customer_id) {
+            this.customer_id = customer_id;
             return this;
         }
 
@@ -130,9 +111,40 @@ public class PurchaseBill {
             return this;
         }
 
-        // Build method to return the final PurchaseBill object
-        public PurchaseBill build() {
-            return new PurchaseBill(this);
+        public SalesInvoice build() {
+            return new SalesInvoice(this);
         }
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setInvoice_date(Long invoice_date) {
+        this.invoice_date = invoice_date;
+    }
+
+    public void setCustomer_id(Integer customer_id) {
+        this.customer_id = customer_id;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public void setCreated_at(Long created_at) {
+        this.created_at = created_at;
+    }
+
+    public void setUpdated_at(Long updated_at) {
+        this.updated_at = updated_at;
     }
 }

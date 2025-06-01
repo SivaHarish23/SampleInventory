@@ -1,134 +1,67 @@
 package DTO;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class PurchaseBillDTO {
-    private Integer id, vendor_id;
-    private String status;
+    private String id;
     private String bill_date;
-    private LocalDateTime created_at, updated_at;
+    private String vendor_id;
     private BigDecimal amount;
-    public List<BillItemDTO> items;
+    private String status;
+    private String notes;
+    private String created_at;
+    private String updated_at;
+    private List<BillLineItemDTO> bill_line_items;
 
     public PurchaseBillDTO() {
     }
 
-    public PurchaseBillDTO(Integer id, Integer vendor_id, String status, String bill_date, LocalDateTime created_at, LocalDateTime updated_at, BigDecimal amount, List<BillItemDTO> items) {
-        this.id = id;
-        this.vendor_id = vendor_id;
-        this.status = status;
-        this.bill_date = bill_date;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
-        this.amount = amount;
-        this.items = items;
+    private String setStringStatus(Integer status){
+        switch (status){
+            case 0: return "PAID";
+            case 1: return "RECEIEVED";
+        }
+        return "";
     }
 
-    public Integer getId() {
-        return id;
+    // Private constructor
+    private PurchaseBillDTO(Builder builder) {
+        this.id = builder.id;
+        this.bill_date = builder.bill_date;
+        this.vendor_id = builder.vendor_id;
+        this.amount = builder.amount;
+        this.status = builder.status;
+        this.notes = builder.notes;
+        this.created_at = builder.created_at;
+        this.updated_at = builder.updated_at;
+        this.bill_line_items = builder.bill_line_items;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Integer getVendor_id() {
-        return vendor_id;
-    }
-
-    public void setVendor_id(Integer vendor_id) {
-        this.vendor_id = vendor_id;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getBill_date() {
-        return bill_date;
-    }
-
-    public void setBill_date(String bill_date) {
-        this.bill_date = bill_date;
-    }
-
-    public LocalDateTime getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(LocalDateTime created_at) {
-        this.created_at = created_at;
-    }
-
-    public LocalDateTime getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(LocalDateTime updated_at) {
-        this.updated_at = updated_at;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public List<BillItemDTO> getItems() {
-        return items;
-    }
-
-    public void setItems(List<BillItemDTO> items) {
-        this.items = items;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    // Builder class
     public static class Builder {
-        private Integer id, vendor_id;
-        private String status, bill_date;
-        private LocalDateTime created_at, updated_at;
+        private String id;
+        private String bill_date;
+        private String vendor_id;
         private BigDecimal amount;
-        private List<BillItemDTO> items;
+        private String status;
+        private String notes;
+        private String created_at;
+        private String updated_at;
+        private List<BillLineItemDTO> bill_line_items;
 
-        public Builder id(Integer id) {
+        public Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        public Builder vendorId(Integer vendor_id) {
-            this.vendor_id = vendor_id;
-            return this;
-        }
-
-        public Builder status(String status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder billDate(String bill_date) {
+        public Builder bill_date(String bill_date) {
             this.bill_date = bill_date;
             return this;
         }
 
-        public Builder createdAt(LocalDateTime created_at) {
-            this.created_at = created_at;
-            return this;
-        }
-
-        public Builder updatedAt(LocalDateTime updated_at) {
-            this.updated_at = updated_at;
+        public Builder vendor_id(String vendor_id) {
+            this.vendor_id = vendor_id;
             return this;
         }
 
@@ -137,27 +70,123 @@ public class PurchaseBillDTO {
             return this;
         }
 
-        public Builder items(List<BillItemDTO> items) {
-            this.items = items;
+        public Builder status(Integer status) {
+            this.status = build().setStringStatus(status);
+            return this;
+        }
+
+        public Builder notes(String notes) {
+            this.notes = notes;
+            return this;
+        }
+
+        public Builder created_at(String created_at) {
+            this.created_at = created_at;
+            return this;
+        }
+
+        public Builder updated_at(String updated_at) {
+            this.updated_at = updated_at;
+            return this;
+        }
+
+        public Builder bill_line_items(List<BillLineItemDTO> bill_line_items) {
+            this.bill_line_items = bill_line_items;
             return this;
         }
 
         public PurchaseBillDTO build() {
-            return new PurchaseBillDTO(id, vendor_id, status, bill_date, created_at, updated_at, amount, items);
+            return new PurchaseBillDTO(this);
         }
+    }
+
+
+    // Getters
+    public String getId() {
+        return id;
+    }
+
+    public String getBill_date() {
+        return bill_date;
+    }
+
+    public String getVendor_id() {
+        return vendor_id;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public String getCreated_at() {
+        return created_at;
+    }
+
+    public String getUpdated_at() {
+        return updated_at;
+    }
+
+    public List<BillLineItemDTO> getBillLineItems() {
+        return bill_line_items;
+    }
+
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setBill_date(String bill_date) {
+        this.bill_date = bill_date;
+    }
+
+    public void setVendor_id(String vendor_id) {
+        this.vendor_id = vendor_id;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
+    }
+
+    public void setUpdated_at(String updated_at) {
+        this.updated_at = updated_at;
+    }
+
+    public void setBillLineItems(List<BillLineItemDTO> bill_line_items) {
+        this.bill_line_items = bill_line_items;
     }
 
     @Override
     public String toString() {
         return "PurchaseBillDTO{" +
-                "id=" + id +
-                ", vendor_id=" + vendor_id +
-                ", status='" + status + '\'' +
+                "id='" + id + '\'' +
                 ", bill_date='" + bill_date + '\'' +
-                ", created_at=" + created_at +
-                ", updated_at=" + updated_at +
+                ", vendor_id='" + vendor_id + '\'' +
                 ", amount=" + amount +
-                ", items=" + items +
+                ", status='" + status + '\'' +
+                ", notes='" + notes + '\'' +
+                ", created_at='" + created_at + '\'' +
+                ", updated_at='" + updated_at + '\'' +
+                ", bill_line_items=" + bill_line_items +
                 '}';
     }
 }
