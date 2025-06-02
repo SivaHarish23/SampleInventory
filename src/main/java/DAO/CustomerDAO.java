@@ -3,12 +3,13 @@ package DAO;
 import DTO.CustomerDTO;
 import DTO.PartyDTO;
 import Model.Customer;
+import Model.Party;
 import Util.TimeUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class CustomerDAO extends PartyDAO<CustomerDTO> {
+public class CustomerDAO extends PartyDAO<Customer> {
 
     @Override
     protected String getTableName() {
@@ -16,15 +17,15 @@ public class CustomerDAO extends PartyDAO<CustomerDTO> {
     }
 
     @Override
-    protected CustomerDTO createEntityFromResultSet(ResultSet rs) throws SQLException {
-        return new CustomerDTO(
-                new PartyDTO.Builder()
-                        .id("CUS-" + rs.getInt("id"))
+    protected Customer createEntityFromResultSet(ResultSet rs) throws SQLException {
+        return new Customer(
+                new Party.Builder()
+                        .id(rs.getInt("id"))
                         .name(rs.getString("name"))
                         .location(rs.getString("location"))
-                        .phoneNumber(rs.getString("phone_number"))
-                        .created_at(TimeUtil.epochToString(rs.getLong("created_at")))
-                        .updated_at(TimeUtil.epochToString(rs.getLong("updated_at")))
+                        .phone_number(rs.getString("phone_number"))
+                        .created_at(rs.getLong("created_at"))
+                        .updated_at(rs.getLong("updated_at"))
         );
     }
 }

@@ -1,6 +1,7 @@
 package Servlet;
 
 import DTO.CustomerDTO;
+import DTO.PartyDTO;
 import Model.Customer;
 import Service.CustomerService;
 import com.google.gson.Gson;
@@ -10,6 +11,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/customers/*")
@@ -37,10 +39,14 @@ public class CustomerServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
 //            List<Customer> customers = customerService.getAllCustomers();
-            List<CustomerDTO> customers = customerService.getAll();
+            List<Customer> customers = customerService.getAll();
+
+            List<CustomerDTO> customersMasked = new ArrayList<>();
+            if(customers != null) for(Customer c : customers) customersMasked.add(CustomerDTO.mask(c));
+
             json.addProperty("status", "success");
             json.addProperty("message", "Customers retrieved successfully");
-            json.add("customers", gson.toJsonTree(customers));
+            json.add("customers", gson.toJsonTree(customersMasked));
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception e) {
             json.addProperty("status", "error");
@@ -54,11 +60,17 @@ public class CustomerServlet extends HttpServlet {
     private void handleGetCustomer(String id, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            CustomerDTO customer = customerService.getPartyById(id);
+
+            CustomerDTO customerDTO = new CustomerDTO(new PartyDTO.Builder().id(id));
+            Customer customerUnmasked = Customer.unMask(customerDTO);
+
+            Customer customer = customerService.getPartyById(customerUnmasked.getId());
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
             if (customer != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer found");
-                json.add("customer", gson.toJsonTree(customer));
+                json.add("customer", gson.toJsonTree(customerDTOMasked));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "not_found");
@@ -89,12 +101,16 @@ public class CustomerServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
-            customerDTO = customerService.createParty(customerDTO);
+            Customer customerUnMasked = Customer.unMask(customerDTO);
+
+            Customer customer = customerService.createParty(customerUnMasked);
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
             if (customerDTO != null) {
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer created!");
-                json.add("customer", gson.toJsonTree(customerDTO));
+                json.add("customer", gson.toJsonTree(customerDTOMasked));
             } else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 json.addProperty("status", "error");
@@ -125,17 +141,22 @@ public class CustomerServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
+            // Ensure customer ID matches path ID
+            customerDTO.setId(id);
+
+            Customer customerUnMasked = Customer.unMask(customerDTO);
             if (customerDTO == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
                 return;
             }
-            // Ensure customer ID matches path ID
-            customerDTO.setId(id);
-            customerDTO = customerService.updateParty(customerDTO);
-            if (customerDTO != null) {
+
+            Customer customer = customerService.updateParty(customerUnMasked);
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
+            if (customerDTOMasked != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer updated successfully");
-                json.add("customer",gson.toJsonTree(customerDTO));
+                json.add("customer",gson.toJsonTree(customerDTOMasked));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
@@ -152,46 +173,43 @@ public class CustomerServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
-//    @Override
-//    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//        // DELETE /customers/{id} – Delete customer by ID
-//        response.setContentType("application/json");
-//        String pathInfo = request.getPathInfo();
-//
-//        if (pathInfo == null || pathInfo.equals("/")) {
-//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Customer ID is missing in URL");
-//            return;
-//        }
-//
-//        String idStr = pathInfo.substring(1);
-//        int id;
-//        try {
-//            id = Integer.parseInt(idStr);
-//        } catch (NumberFormatException e) {
-//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-//            return;
-//        }
-//
-//        JsonObject json = new JsonObject();
-//        try {
-//            if (customerService.deleteCustomer(id)) {
-//                json.addProperty("status", "success");
-//                json.addProperty("message", "Customer deleted successfully");
-//                response.setStatus(HttpServletResponse.SC_OK);
-//            } else {
-//                json.addProperty("status", "error");
-//                json.addProperty("message", "Customer with given ID not found");
-//                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-//            }
-//        } catch (Exception e) {
-//            json.addProperty("status", "error");
-//            json.addProperty("message", "Failed to process deletion");
-//            json.addProperty("error", e.getMessage());
-//            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-//        }
-//
-//        writeResponse(response, json);
-//    }
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // DELETE /customers/{id} – Delete customer by ID
+        response.setContentType("application/json");
+        String pathInfo = request.getPathInfo();
+
+        if (pathInfo == null || pathInfo.equals("/")) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Customer ID is missing in URL");
+            return;
+        }
+
+        String id = pathInfo.substring(1);
+        CustomerDTO customerDTO = new CustomerDTO(new PartyDTO.Builder().id(id));
+        Customer customerUnmasked = Customer.unMask(customerDTO);
+
+        JsonObject json = new JsonObject();
+
+        try {
+            if (customerService.deleteParty(customerUnmasked.getId())) {
+                json.addProperty("status", "success");
+                json.addProperty("message", "Customer deleted successfully");
+                json.addProperty("customer_id", id);
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                json.addProperty("status", "error");
+                json.addProperty("message", "Customer with given ID not found");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (Exception e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Failed to process deletion");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+
+        writeResponse(response, json);
+    }
 
     private void sendError(HttpServletResponse response, int statusCode, String message) throws IOException {
         response.setStatus(statusCode);

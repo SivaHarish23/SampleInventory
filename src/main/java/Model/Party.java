@@ -4,13 +4,16 @@ public class Party {
     protected Integer id;
     protected String name;
     protected String location;
-    protected String phoneNumber;
-    protected Long createdAt;
-    protected Long updatedAt;
+    protected String phone_number;
+    protected Long created_at;
+    protected Long updated_at;
     protected Type type;
 
     public enum Type {
         CUSTOMER, VENDOR
+    }
+
+    public Party() {
     }
 
     // Private constructor
@@ -18,9 +21,9 @@ public class Party {
         this.id = builder.id;
         this.name = builder.name;
         this.location = builder.location;
-        this.phoneNumber = builder.phoneNumber;
-        this.createdAt = builder.createdAt;
-        this.updatedAt = builder.updatedAt;
+        this.phone_number = builder.phone_number;
+        this.created_at = builder.created_at;
+        this.updated_at = builder.updated_at;
         this.type = builder.type;
     }
 
@@ -32,9 +35,9 @@ public class Party {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
+                ", phone_number='" + phone_number + '\'' +
+                ", created_at=" + created_at +
+                ", updated_at=" + updated_at +
                 ", type=" + type +
                 '}';
     }
@@ -44,17 +47,17 @@ public class Party {
         private Integer id;
         private String name;
         private String location;
-        private String phoneNumber;
-        private Long createdAt;
-        private Long updatedAt;
+        private String phone_number;
+        private Long created_at;
+        private Long updated_at;
         private Type type;
 
         public Builder id(Integer id) { this.id = id; return this; }
         public Builder name(String name) { this.name = name; return this; }
         public Builder location(String location) { this.location = location; return this; }
-        public Builder phoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; return this; }
-        public Builder createdAt(Long createdAt) { this.createdAt = createdAt; return this; }
-        public Builder updatedAt(Long updatedAt) { this.updatedAt = updatedAt; return this; }
+        public Builder phone_number(String phone_number) { this.phone_number = phone_number; return this; }
+        public Builder created_at(Long created_at) { this.created_at = created_at; return this; }
+        public Builder updated_at(Long updated_at) { this.updated_at = updated_at; return this; }
 
 
         public Party build() {
@@ -87,27 +90,27 @@ public class Party {
     }
 
     public String getPhoneNumber() {
-        return phoneNumber;
+        return phone_number;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public void setPhoneNumber(String phone_number) {
+        this.phone_number = phone_number;
     }
 
     public Long getCreatedAt() {
-        return createdAt;
+        return created_at;
     }
 
-    public void setCreatedAt(Long createdAt) {
-        this.createdAt = createdAt;
+    public void setCreatedAt(Long created_at) {
+        this.created_at = created_at;
     }
 
     public Long getUpdatedAt() {
-        return updatedAt;
+        return updated_at;
     }
 
-    public void setUpdatedAt(Long updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setUpdatedAt(Long updated_at) {
+        this.updated_at = updated_at;
     }
 
     public Type getType() {

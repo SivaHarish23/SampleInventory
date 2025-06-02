@@ -28,7 +28,10 @@ public enum PurchaseBillStatus {
         throw new IllegalArgumentException("Invalid status name: " + name);
     }
 
-    public static int codeFromString(String name) {
+    public static int getCode(String name) {
         return fromString(name).getCode();
+    }
+    public static String getString(int code) {
+        return fromCode(code).name();
     }
 }

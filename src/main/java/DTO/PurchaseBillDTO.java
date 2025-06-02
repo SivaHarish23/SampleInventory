@@ -1,6 +1,12 @@
 package DTO;
 
+import Model.BillLineItem;
+import Model.PurchaseBill;
+import Model.PurchaseBillStatus;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PurchaseBillDTO {
@@ -17,13 +23,27 @@ public class PurchaseBillDTO {
     public PurchaseBillDTO() {
     }
 
-    private String setStringStatus(Integer status){
-        switch (status){
-            case 0: return "PAID";
-            case 1: return "RECEIEVED";
+    public PurchaseBillDTO(PurchaseBill purchaseBill){
+        this.id = (purchaseBill.getId()!=null) ? "BIL-" + purchaseBill.getId() : null;
+        this.bill_date = (purchaseBill.getBill_date()!=null) ? TimeUtil.epochToString(purchaseBill.getBill_date()) : null;
+        this.vendor_id = (purchaseBill.getVendor_id()!=null) ? "VEN-" + purchaseBill.getVendor_id() : null;
+        this.amount = purchaseBill.getAmount();
+        this.status = (purchaseBill.getStatus()!=null) ? PurchaseBillStatus.getString(purchaseBill.getStatus()) : null;
+        this.notes = purchaseBill.getNotes();
+        this.created_at = (purchaseBill.getCreated_at()!=null) ? TimeUtil.epochToString(purchaseBill.getCreated_at()) : null;
+        this.updated_at = (purchaseBill.getUpdated_at()!=null) ? TimeUtil.epochToString(purchaseBill.getUpdated_at()) : null;
+
+        List<BillLineItem> billLineItems = purchaseBill.getBill_line_items();
+
+        List<BillLineItemDTO> billLineItemDTOs= new ArrayList<>();
+        if(billLineItems!=null) for(BillLineItem bill : billLineItems){
+            bill.setBill_id(null);
+            billLineItemDTOs.add(new BillLineItemDTO(bill));
         }
-        return "";
+
+        this.bill_line_items = billLineItemDTOs;
     }
+
 
     // Private constructor
     private PurchaseBillDTO(Builder builder) {
@@ -70,8 +90,8 @@ public class PurchaseBillDTO {
             return this;
         }
 
-        public Builder status(Integer status) {
-            this.status = build().setStringStatus(status);
+        public Builder status(String status) {
+            this.status = status;
             return this;
         }
 

@@ -1,5 +1,8 @@
 package DTO;
 
+import Model.Product;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
 
 public class ProductDTO {
@@ -11,6 +14,16 @@ public class ProductDTO {
     private String created_at;  // formatted datetime string
     private String updated_at;  // formatted datetime string
 
+    public ProductDTO(Product p){
+        this.id = (p.getId() != null) ? "PRO-" + p.getId() : null;
+        this.name = p.getName();
+        this.cost_price = p.getCost_price();
+        this.selling_price = p.getSelling_price();
+        this.opening_stock = p.getOpening_stock();
+        this.created_at = (p.getCreated_at()!=null) ? TimeUtil.epochToString(p.getCreated_at()) : null;
+        this.updated_at = (p.getUpdated_at()!=null) ? TimeUtil.epochToString(p.getUpdated_at()) : null;
+    }
+    
     public ProductDTO() {}
 
     private ProductDTO(Builder builder) {

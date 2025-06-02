@@ -11,7 +11,7 @@ import java.util.*;
 public class BillLineItemDAO {
 
 
-    public BillLineItemDTO createBillItem(BillLineItem dto, Connection conn) throws SQLException {
+    public BillLineItem createBillItem(BillLineItem dto, Connection conn) throws SQLException {
         String sql = "INSERT INTO bill_line_items (bill_id, product_id, quantity, rate, amount) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, dto.getBill_id());
@@ -19,44 +19,61 @@ public class BillLineItemDAO {
             stmt.setInt(3, dto.getQuantity());
             stmt.setBigDecimal(4, dto.getRate());
             stmt.setBigDecimal(5, dto.getAmount());
-
-            return getResultRow(conn,stmt,null);
+            try {
+                return getResultRow(conn, stmt, null);
+            } catch (SQLException e) {
+                System.out.println("BillLineItemDAO : createBillItem : " + e.getMessage());
+                throw e;
+            }
         }
     }
 
-    public BillLineItemDTO readBillItemById(int id, Connection conn) throws SQLException {
+    public BillLineItem readBillItemById(int id, Connection conn) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM bill_line_items WHERE id = ?")) {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return extractBillLineItem(rs);
+            try {
+                if (rs.next()) return extractBillLineItem(rs);
+            } catch (SQLException e) {
+                System.out.println("BillLineItemDAO : readBillItemById : " + e.getMessage());
+                throw e;
+            }
         }
         return null;
     }
 
-    public List<BillLineItemDTO> readAllBillItems(Connection conn) throws SQLException {
-        List<BillLineItemDTO> items = new ArrayList<>();
+    public List<BillLineItem> readAllBillItems(Connection conn) throws SQLException {
+        List<BillLineItem> items = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM bill_line_items")) {
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                items.add(extractBillLineItem(rs));
+            try {
+                while (rs.next()) {
+                    items.add(extractBillLineItem(rs));
+                }
+            } catch (SQLException e) {
+                System.out.println("BillLineItemDAO : readAllBillItems : " + e.getMessage());
+                throw e;
             }
         }
         return items;
     }
 
-    public List<BillLineItemDTO> getItemsByBillId(int billId, Connection conn) throws SQLException {
-        List<BillLineItemDTO> items = new ArrayList<>();
+    public List<BillLineItem> getItemsByBillId(int billId, Connection conn) throws SQLException {
+        List<BillLineItem> items = new ArrayList<>();
         try (PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM bill_line_items WHERE bill_id = ?")) {
             pstmt.setInt(1, billId);
             ResultSet rss = pstmt.executeQuery();
             while (rss.next()) {
                 items.add(extractBillLineItem(rss));
             }
+        } catch (SQLException e) {
+            System.out.println("BillLineItemDAO : getItemsByBillId : " + e.getMessage());
+            throw e;
         }
         return items;
     }
 
-    public BillLineItemDTO updateBillItem(BillLineItemDTO dto, Connection conn) throws SQLException {
+    public BillLineItem updateBillItem(BillLineItem dto, Connection conn) throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE bill_line_items SET ");
         List<Object> values = new ArrayList<>();
 
@@ -79,14 +96,17 @@ public class BillLineItemDAO {
 
         sql.setLength(sql.length() - 2); // remove last comma
         sql.append(" WHERE id = ?");
-        int billLineItemId = Integer.parseInt(dto.getId());
+        int billLineItemId = dto.getId();
         values.add(billLineItemId);
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString(),Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS)) {
             for (int i = 0; i < values.size(); i++) {
                 stmt.setObject(i + 1, values.get(i));
             }
-            return getResultRow(conn,stmt,billLineItemId);
+            return getResultRow(conn, stmt, billLineItemId);
+        } catch (SQLException e) {
+            System.out.println("BillLineItemDAO : updateBillItem : " + e.getMessage());
+            throw e;
         }
     }
 
@@ -94,34 +114,43 @@ public class BillLineItemDAO {
         try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM bill_line_items WHERE id = ?")) {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("BillLineItemDAO : deleteBillItem : " + e.getMessage());
+            throw e;
         }
     }
 
 
-    private BillLineItemDTO getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
+    private BillLineItem getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
         String fetch = "SELECT * FROM bill_line_items WHERE id = ?";
 
-        if(preparedStatement.executeUpdate() > 0){
+        if (preparedStatement.executeUpdate() > 0) {
             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                 if (generatedKeys.next() && pid == null)
                     pid = generatedKeys.getInt(1);
+            } catch (SQLException e) {
+                System.out.println("BillLineItemDAO : getResultRow : error in fetching generated key : " + e.getMessage());
+                throw e;
             }
 
-            try(PreparedStatement ps = conn.prepareStatement(fetch)){
-                ps.setInt(1,pid);
-                try(ResultSet rs = ps.executeQuery()){
-                    if(rs.next()) return extractBillLineItem(rs);
+            try (PreparedStatement ps = conn.prepareStatement(fetch)) {
+                ps.setInt(1, pid);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return extractBillLineItem(rs);
                 }
+            } catch (SQLException e) {
+                System.out.println("BillLineItemDAO : getResultRow : error fetching row of generated key : " + e.getMessage());
+                throw e;
             }
         }
         return null;
     }
 
-    private BillLineItemDTO extractBillLineItem(ResultSet rs) throws SQLException {
-        BillLineItemDTO dto = new BillLineItemDTO();
-        dto.setId("ITM-" + rs.getString("id"));
-        dto.setBill_id("BIL-" + rs.getInt("bill_id"));
-        dto.setProduct_id("PRO-" + rs.getInt("product_id"));
+    private BillLineItem extractBillLineItem(ResultSet rs) throws SQLException {
+        BillLineItem dto = new BillLineItem();
+        dto.setId(rs.getInt("id"));
+        dto.setBill_id(rs.getInt("bill_id"));
+        dto.setProduct_id(rs.getInt("product_id"));
         dto.setQuantity(rs.getInt("quantity"));
         dto.setRate(rs.getBigDecimal("rate"));
         dto.setAmount(rs.getBigDecimal("amount"));
@@ -129,12 +158,14 @@ public class BillLineItemDAO {
     }
 
 
-
     public BigDecimal getBillAmount(int billId, Connection conn) throws SQLException {
-        List<BillLineItemDTO> items = getItemsByBillId(billId, conn);
         BigDecimal amount = BigDecimal.valueOf(0);
-        for(BillLineItemDTO item : items){
-            amount = amount.add(item.getAmount());
+        try {
+            List<BillLineItem> items = getItemsByBillId(billId, conn);
+            for (BillLineItem item : items) amount = amount.add(item.getAmount());
+        } catch (SQLException e) {
+            System.out.println("BillLineItemDAO : getBillAmount : " + e.getMessage());
+            throw e;
         }
         return amount;
     }

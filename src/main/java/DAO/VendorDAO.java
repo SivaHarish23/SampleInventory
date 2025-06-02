@@ -2,12 +2,14 @@ package DAO;
 
 import DTO.PartyDTO;
 import DTO.VendorDTO;
+import Model.Party;
+import Model.Vendor;
 import Util.TimeUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class VendorDAO extends PartyDAO<VendorDTO> {
+public class VendorDAO extends PartyDAO<Vendor> {
 
     @Override
     protected String getTableName() {
@@ -15,15 +17,15 @@ public class VendorDAO extends PartyDAO<VendorDTO> {
     }
 
     @Override
-    protected VendorDTO createEntityFromResultSet(ResultSet rs) throws SQLException {
-        return new VendorDTO(
-                new PartyDTO.Builder()
-                        .id("VEN-" + rs.getInt("id"))
+    protected Vendor createEntityFromResultSet(ResultSet rs) throws SQLException {
+        return new Vendor(
+                new Party.Builder()
+                        .id(rs.getInt("id"))
                         .name(rs.getString("name"))
                         .location(rs.getString("location"))
-                        .phoneNumber(rs.getString("phone_number"))
-                        .created_at(TimeUtil.epochToString(rs.getLong("created_at")))
-                        .updated_at(TimeUtil.epochToString(rs.getLong("updated_at")))
+                        .phone_number(rs.getString("phone_number"))
+                        .created_at(rs.getLong("created_at"))
+                        .updated_at(rs.getLong("updated_at"))
         );
     }
 }

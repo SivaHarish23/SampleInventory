@@ -13,7 +13,7 @@ import java.util.*;
 
 public class PurchaseBillDAO{
 
-    public PurchaseBillDTO createBill(PurchaseBill dto, Connection conn) throws SQLException {
+    public PurchaseBill createBill(PurchaseBill dto, Connection conn) throws SQLException {
         // Omitted: insert bill and return created DTO with generated ID
         String sql = "INSERT INTO purchase_bills (bill_date, vendor_id, amount, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -26,22 +26,28 @@ public class PurchaseBillDAO{
             stmt.setLong(7,Instant.now().getEpochSecond());
 
             return getResultRow(conn,stmt,null);
+        } catch (SQLException e) {
+            System.out.println("PurchaseBillDAO : createBillItem : " + e.getMessage());
+            throw e;
         }
     }
 
-    public PurchaseBillDTO getBillById(int id, Connection conn) throws SQLException {
+    public PurchaseBill getBillById(int id, Connection conn) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM purchase_bills WHERE id = ?")) {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next())
                 return extractPurchaseBill(rs);
+        } catch (SQLException e) {
+            System.out.println("PurchaseBillDAO : getBillById : " + e.getMessage());
+            throw e;
         }
         return null;
     }
 
 
-    public List<PurchaseBillDTO> getAllBills(Connection conn) throws SQLException {
-        List<PurchaseBillDTO> purchaseBills = new ArrayList<>();
+    public List<PurchaseBill> getAllBills(Connection conn) throws SQLException {
+        List<PurchaseBill> purchaseBills = new ArrayList<>();
         String sql = "SELECT * from purchase_bills";
         try (Connection connection = DBConnection.getInstance().getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -49,22 +55,25 @@ public class PurchaseBillDAO{
             while (resultSet.next()) {
                 purchaseBills.add(extractPurchaseBill(resultSet));
             }
+        }catch (SQLException e) {
+            System.out.println("PurchaseBillDAO : getAllBills : " + e.getMessage());
+            throw e;
         }
         return purchaseBills;
     }
 
 
-    public PurchaseBillDTO updatePurchaseBill(PurchaseBillDTO dto, Connection conn) throws SQLException {
+    public PurchaseBill updatePurchaseBill(PurchaseBill dto, Connection conn) throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE purchase_bills SET ");
         List<Object> values = new ArrayList<>();
 
         if (dto.getBill_date() != null) {
             sql.append("bill_date = ?, ");
-            values.add(Long.parseLong(dto.getBill_date()));
+            values.add(dto.getBill_date());
         }
         if (dto.getVendor_id() != null) {
             sql.append("vendor_id = ?, ");
-            values.add(Integer.parseInt(dto.getVendor_id()));
+            values.add(dto.getVendor_id());
         }
         if (dto.getAmount() != null) {
             sql.append("amount = ?, ");
@@ -72,7 +81,7 @@ public class PurchaseBillDAO{
         }
         if (dto.getStatus() != null) {
             sql.append("status = ?, ");
-            values.add(Integer.parseInt(dto.getStatus()));
+            values.add(dto.getStatus());
         }
         if (dto.getNotes() != null) {
             sql.append("notes = ?, ");
@@ -83,7 +92,7 @@ public class PurchaseBillDAO{
         values.add(Instant.now().getEpochSecond());
 
         sql.append("WHERE id = ?");
-        int purchaseBillId = Integer.parseInt(dto.getId());
+        int purchaseBillId = dto.getId();
         values.add(purchaseBillId);
 
         try (PreparedStatement stmt = conn.prepareStatement(sql.toString(),Statement.RETURN_GENERATED_KEYS)) {
@@ -91,6 +100,9 @@ public class PurchaseBillDAO{
                 stmt.setObject(i + 1, values.get(i));
             }
             return getResultRow(conn,stmt,purchaseBillId);
+        }catch (SQLException e) {
+            System.out.println("PurchaseBillDAO : updatePurchaseBill : " + e.getMessage());
+            throw e;
         }
     }
 
@@ -103,14 +115,16 @@ public class PurchaseBillDAO{
     }
 
 
-
-    private PurchaseBillDTO getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
+    private PurchaseBill getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
         String fetch = "SELECT * FROM purchase_bills WHERE id = ?";
 
         if(preparedStatement.executeUpdate() > 0){
             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                 if (generatedKeys.next() && pid == null)
                     pid = generatedKeys.getInt(1);
+            }catch (SQLException e) {
+                System.out.println("PurchaseBillDAO : createBillItem : " + e.getMessage());
+                throw e;
             }
 
             try(PreparedStatement ps = conn.prepareStatement(fetch)){
@@ -118,22 +132,25 @@ public class PurchaseBillDAO{
                 try(ResultSet rs = ps.executeQuery()){
                     if(rs.next()) return extractPurchaseBill(rs);
                 }
+            }catch (SQLException e) {
+                System.out.println("PurchaseBillDAO : createBillItem : " + e.getMessage());
+                throw e;
             }
         }
         return null;
     }
 
-    private PurchaseBillDTO extractPurchaseBill(ResultSet rs) throws SQLException {
+    private PurchaseBill extractPurchaseBill(ResultSet rs) throws SQLException {
 
-        return  new PurchaseBillDTO.Builder()
-                .id("BIL-" + rs.getInt("id"))
-                .bill_date(TimeUtil.epochToString(rs.getLong("bill_date")))
-                .vendor_id("VEN-" + rs.getInt("vendor_id"))
-                .amount(rs.getBigDecimal("amount"))
-                .status(rs.getInt("status"))
-                .notes(rs.getString("notes"))
-                .created_at(TimeUtil.epochToString(rs.getLong("created_at")))
-                .updated_at(TimeUtil.epochToString(rs.getLong("updated_at")))
+        return  new PurchaseBill.Builder()
+                .setId(rs.getInt("id"))
+                .setBill_date(rs.getLong("bill_date"))
+                .setVendor_id(rs.getInt("vendor_id"))
+                .setAmount(rs.getBigDecimal("amount"))
+                .setStatus(rs.getInt("status"))
+                .setNotes(rs.getString("notes"))
+                .setCreated_at(rs.getLong("created_at"))
+                .setUpdated_at(rs.getLong("updated_at"))
                 .build();
     }
 }

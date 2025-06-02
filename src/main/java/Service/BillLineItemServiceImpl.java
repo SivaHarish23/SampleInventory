@@ -16,49 +16,41 @@ public class BillLineItemServiceImpl implements BillLineItemService {
     private final BillLineItemDAO billLineItemDAO = new BillLineItemDAO();
 
     @Override
-    public BillLineItemDTO createBillItem(BillLineItemDTO dto, Connection conn) throws SQLException {
-        BillLineItem model = new BillLineItem(dto);  // assuming conversion constructor
+    public BillLineItem createBillItem(BillLineItem model, Connection conn) throws SQLException { // assuming conversion constructor
         return billLineItemDAO.createBillItem(model, conn);
 
     }
 
     @Override
-    public BillLineItemDTO readBillItemById(String id, Connection conn) throws SQLException {
-
-        return billLineItemDAO.readBillItemById(Integer.parseInt(id), conn);
+    public BillLineItem readBillItemById(Integer id, Connection conn) throws SQLException {
+        return billLineItemDAO.readBillItemById(id, conn);
 
     }
 
-    public List<BillLineItemDTO> getItemsByBillId(String billId, Connection conn) throws SQLException {
-        billId = billId.substring(4);
-        return billLineItemDAO.getItemsByBillId(Integer.parseInt(billId), conn);
+    public List<BillLineItem> getItemsByBillId(Integer billId, Connection conn) throws SQLException {
+        return billLineItemDAO.getItemsByBillId(billId, conn);
     }
 
     @Override
-    public List<BillLineItemDTO> readAllBillItems(Connection conn) throws SQLException {
-
+    public List<BillLineItem> readAllBillItems(Connection conn) throws SQLException {
         return billLineItemDAO.readAllBillItems(conn);
 
     }
 
     @Override
-    public BillLineItemDTO updateBillItem(BillLineItemDTO dto, Connection conn) throws SQLException {
-        dto.setId(dto.getId().substring(4));
-        dto.setProduct_id(dto.getProduct_id().substring(4));
-        return billLineItemDAO.updateBillItem(dto, conn);
+    public BillLineItem updateBillItem(BillLineItem blm, Connection conn) throws SQLException {
+        return billLineItemDAO.updateBillItem(blm, conn);
 
     }
 
     @Override
-    public boolean deleteBillItemById(String id, Connection conn) throws SQLException {
-        String billId = id.substring(4);
-        return billLineItemDAO.deleteBillItem(Integer.parseInt(billId), conn);
+    public boolean deleteBillItem(Integer id, Connection conn) throws SQLException {
+        return billLineItemDAO.deleteBillItem(id, conn);
 
     }
 
-    public BigDecimal getBillAmount(String id, Connection conn) throws SQLException {
-        String billId = id.substring(4);
-        return billLineItemDAO.getBillAmount(Integer.parseInt(billId), conn);
+    public BigDecimal getBillAmount(Integer id, Connection conn) throws SQLException {
+        return billLineItemDAO.getBillAmount(id, conn);
     }
 
 }

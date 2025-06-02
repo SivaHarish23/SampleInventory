@@ -13,6 +13,14 @@ public class BillLineItem {
     private BigDecimal rate;
     private BigDecimal amount;
 
+    public BillLineItem(BillLineItemDTO billLineItem){
+        this.id = (billLineItem.getId()!=null) ? Integer.parseInt(billLineItem.getId().substring(4)) : null;
+        this.bill_id = (billLineItem.getBill_id()!=null) ? Integer.parseInt(billLineItem.getBill_id().substring(4)) : null;
+        this.product_id = (billLineItem.getProduct_id()!=null) ? Integer.parseInt(billLineItem.getProduct_id().substring(4)) : null;
+        this.quantity = billLineItem.getQuantity();
+        this.rate = billLineItem.getRate();
+        this.amount = billLineItem.getRate().multiply(BigDecimal.valueOf(billLineItem.getQuantity()));    }
+
     // Private constructor
     private BillLineItem(Builder builder) {
         this.id = builder.id;
@@ -23,38 +31,8 @@ public class BillLineItem {
         this.amount = builder.amount;
     }
 
-    public BillLineItem(BillLineItemDTO dto){
-        this.id = dto.getId() == null ? 0 : Integer.parseInt(dto.getId().substring(4));
-        this.bill_id = Integer.parseInt(dto.getBill_id().substring(4));
-        this.product_id = Integer.parseInt(dto.getProduct_id().substring(4));
-        this.quantity = dto.getQuantity();
-        this.rate = dto.getRate();
-        this.amount = dto.getRate().multiply(BigDecimal.valueOf(dto.getQuantity()));
-    }
+    public BillLineItem() {
 
-    // Getters
-    public Integer getId() {
-        return id;
-    }
-
-    public Integer getBill_id() {
-        return bill_id;
-    }
-
-    public Integer getProduct_id() {
-        return product_id;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public BigDecimal getRate() {
-        return rate;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
     }
 
     // Builder class
@@ -99,5 +77,65 @@ public class BillLineItem {
         public BillLineItem build() {
             return new BillLineItem(this);
         }
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getBill_id() {
+        return bill_id;
+    }
+
+    public void setBill_id(Integer bill_id) {
+        this.bill_id = bill_id;
+    }
+
+    public Integer getProduct_id() {
+        return product_id;
+    }
+
+    public void setProduct_id(Integer product_id) {
+        this.product_id = product_id;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getRate() {
+        return rate;
+    }
+
+    public void setRate(BigDecimal rate) {
+        this.rate = rate;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    @Override
+    public String toString() {
+        return "BillLineItem{" +
+                "id=" + id +
+                ", bill_id=" + bill_id +
+                ", product_id=" + product_id +
+                ", quantity=" + quantity +
+                ", rate=" + rate +
+                ", amount=" + amount +
+                '}';
     }
 }

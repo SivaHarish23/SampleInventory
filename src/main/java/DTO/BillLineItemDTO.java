@@ -1,5 +1,8 @@
 package DTO;
 
+import Model.BillLineItem;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
 
 public class BillLineItemDTO {
@@ -9,6 +12,15 @@ public class BillLineItemDTO {
     private Integer quantity;
     private BigDecimal rate;
     private BigDecimal amount;
+
+    public BillLineItemDTO(BillLineItem billLineItem){
+        this.id = (billLineItem.getId()!=null) ? "ITM-" + billLineItem.getId() : null;
+        this.bill_id = (billLineItem.getBill_id()!=null) ? "BIL-" + billLineItem.getBill_id() : null;
+        this.product_id = (billLineItem.getProduct_id()!=null) ? "PRO-" + billLineItem.getProduct_id() : null;
+        this.quantity = billLineItem.getQuantity();
+        this.rate = billLineItem.getRate();
+        this.amount = billLineItem.getRate().multiply(BigDecimal.valueOf(billLineItem.getQuantity()));
+    }
 
     public BillLineItemDTO(String id, String bill_id, String product_id, Integer quantity, BigDecimal rate, BigDecimal amount) {
         this.id = id;
@@ -124,4 +136,17 @@ public class BillLineItemDTO {
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
+
+    @Override
+    public String toString() {
+        return "BillLineItemDTO{" +
+                "id='" + id + '\'' +
+                ", bill_id='" + bill_id + '\'' +
+                ", product_id='" + product_id + '\'' +
+                ", quantity=" + quantity +
+                ", rate=" + rate +
+                ", amount=" + amount +
+                '}';
+    }
 }
+

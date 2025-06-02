@@ -4,7 +4,6 @@ import DAO.ProductDAO;
 import DTO.ProductDTO;
 import Model.Product;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +12,7 @@ public class ProductService {
 
     private final ProductDAO productDAO = new ProductDAO();
 
-    public ProductDTO addProduct(ProductDTO productDTO) throws SQLException {
+    public Product addProduct(Product productDTO) throws SQLException {
         Product product = new Product.Builder()
                 .name(productDTO.getName())
                 .cost_price(productDTO.getCost_price())
@@ -26,23 +25,20 @@ public class ProductService {
         return productDAO.insert(product);
     }
 
-    public List<ProductDTO> getAllProducts() throws SQLException {
+    public List<Product> getAllProducts() throws SQLException {
         return productDAO.getAllRows();
     }
 
-    public ProductDTO getProductById(String id) throws SQLException {
-        id = id.substring(4);
-        return productDAO.findProduct(Integer.parseInt(id));
+    public Product getProductById(Integer id) throws SQLException {
+        return productDAO.findProduct(id);
     }
 
-    public ProductDTO updateProduct(ProductDTO dto) throws SQLException {
-        dto.setId(dto.getId().substring(4));
+    public Product updateProduct(Product dto) throws SQLException {
         return productDAO.updateProduct(dto);
     }
 
-    public boolean deleteProduct(String id) throws SQLException {
-        id = id.substring(4);
-        return productDAO.deleteProduct(Integer.parseInt(id));
+    public boolean deleteProduct(Integer id) throws SQLException {
+        return productDAO.deleteProduct(id);
     }
 
 }

@@ -13,8 +13,8 @@ import java.util.List;
 
 public class ProductDAO {
 
-    public ProductDTO insert(Product product) throws SQLException {
-        ProductDTO productDTO = new ProductDTO();
+    public Product insert(Product product) throws SQLException {
+        Product productDTO = new Product();
         String sql = "INSERT INTO products (name, cost_price, selling_price, opening_stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -30,8 +30,8 @@ public class ProductDAO {
         }
     }
 
-    public List<ProductDTO> getAllRows() throws SQLException {
-        List<ProductDTO> allProducts = new ArrayList<>();
+    public List<Product> getAllRows() throws SQLException {
+        List<Product> allProducts = new ArrayList<>();
         String sql = "SELECT * from products";
         try (Connection connection = DBConnection.getInstance().getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -43,7 +43,7 @@ public class ProductDAO {
         return allProducts;
     }
 
-    public ProductDTO findProduct(int id) throws SQLException {
+    public Product findProduct(int id) throws SQLException {
         String sql = "SELECT * FROM products WHERE id = ?";
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
@@ -54,7 +54,7 @@ public class ProductDAO {
         }
     }
 
-    public ProductDTO updateProduct(ProductDTO dto) throws SQLException {
+    public Product updateProduct(Product dto) throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE products SET ");
         List<Object> values = new ArrayList<>();
 
@@ -76,7 +76,7 @@ public class ProductDAO {
         }
         if (dto.getCreated_at() != null) {
             sql.append("opening_stock = ?, ");
-            values.add(TimeUtil.stringToEpoch(dto.getCreated_at()));
+            values.add(dto.getCreated_at());
         }
 
         if (values.isEmpty()) return null; // nothing to update
@@ -86,10 +86,10 @@ public class ProductDAO {
 
         sql.setLength(sql.length() - 2); // remove last comma and space
         sql.append(" WHERE id = ?");
-        int productId = Integer.parseInt(dto.getId());
+        int productId = dto.getId();
         values.add(productId);
 
-        ProductDTO productDTO = new ProductDTO();
+        Product productDTO = new Product();
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement preparedStatement = conn.prepareStatement(sql.toString(),Statement.RETURN_GENERATED_KEYS)) {
             for (int i = 0; i < values.size(); i++)
@@ -106,7 +106,7 @@ public class ProductDAO {
         }
     }
 
-    private ProductDTO getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
+    private Product getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
         String fetch = "SELECT * FROM products WHERE id = ?";
 
         if(preparedStatement.executeUpdate() > 0){
@@ -126,15 +126,15 @@ public class ProductDAO {
     }
 
     // Helper: Extract PurchaseBill from ResultSet
-    private ProductDTO extractProduct(ResultSet resultSet) throws SQLException {
-        return new ProductDTO.Builder()
-                .id("PRO-"+resultSet.getInt("id"))
+    private Product extractProduct(ResultSet resultSet) throws SQLException {
+        return new Product.Builder()
+                .id(resultSet.getInt("id"))
                 .name(resultSet.getString("name"))
                 .cost_price(resultSet.getBigDecimal("cost_price"))
                 .selling_price(resultSet.getBigDecimal("selling_price"))
                 .opening_stock(resultSet.getInt("opening_stock"))
-                .created_at(TimeUtil.epochToString(resultSet.getLong("created_at")))
-                .updated_at(TimeUtil.epochToString(resultSet.getLong("updated_at")))
+                .created_at(resultSet.getLong("created_at"))
+                .updated_at(resultSet.getLong("updated_at"))
                 .build();
     }
 

@@ -1,5 +1,8 @@
 package Model;
 
+import DTO.ProductDTO;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
 
 public class Product {
@@ -10,6 +13,16 @@ public class Product {
     private Integer opening_stock;
     private Long created_at;
     private Long updated_at;
+
+    public Product(ProductDTO dto){
+        this.id = (dto.getId() != null) ? Integer.parseInt(dto.getId().substring(4)) : null;
+        this.name = dto.getName();
+        this.cost_price = dto.getCost_price();
+        this.selling_price = dto.getSelling_price();
+        this.opening_stock = dto.getOpening_stock();
+        this.created_at = (dto.getCreated_at()!=null) ? TimeUtil.stringToEpoch(dto.getCreated_at()) : null;
+        this.updated_at = (dto.getUpdated_at()!=null) ? TimeUtil.stringToEpoch(dto.getUpdated_at()) : null;
+    }
 
     public Product() {
     }

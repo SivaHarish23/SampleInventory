@@ -1,6 +1,7 @@
 package DAO;
 
 import DTO.PartyDTO;
+import Model.Party;
 import Util.DBConnection;
 
 import java.sql.*;
@@ -8,7 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class PartyDAO<T extends PartyDTO> {
+public abstract class PartyDAO<T extends Party> {
 
     protected abstract String getTableName();
     protected abstract T createEntityFromResultSet(ResultSet rs) throws SQLException;
@@ -66,6 +67,10 @@ public abstract class PartyDAO<T extends PartyDTO> {
             sql.append("location = ?, ");
             values.add(party.getLocation());
         }
+        if (party.getPhoneNumber() != null) {
+            sql.append("phone_number = ?, ");
+            values.add(party.getPhoneNumber());
+        }
 
         if (values.isEmpty()) return null;
 
@@ -74,7 +79,7 @@ public abstract class PartyDAO<T extends PartyDTO> {
 
         sql.setLength(sql.length() - 2); // trim last comma
         sql.append(" WHERE id = ?");
-        int partyId = Integer.parseInt(party.getId());
+        int partyId = party.getId();
         values.add(partyId);
 
         try (Connection conn = DBConnection.getInstance().getConnection();
