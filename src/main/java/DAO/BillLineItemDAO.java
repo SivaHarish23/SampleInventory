@@ -1,7 +1,5 @@
 package DAO;
 
-import DTO.BillLineItemDTO;
-import DTO.ProductDTO;
 import Model.BillLineItem;
 
 import java.math.BigDecimal;

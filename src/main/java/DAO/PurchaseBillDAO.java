@@ -1,8 +1,6 @@
 package DAO;
 
-import DTO.BillLineItemDTO;
-import DTO.ProductDTO;
-import DTO.PurchaseBillDTO;
+import DTO.*;
 import Model.PurchaseBill;
 import Util.DBConnection;
 import Util.TimeUtil;
@@ -123,7 +121,7 @@ public class PurchaseBillDAO{
                 if (generatedKeys.next() && pid == null)
                     pid = generatedKeys.getInt(1);
             }catch (SQLException e) {
-                System.out.println("PurchaseBillDAO : createBillItem : " + e.getMessage());
+                System.out.println("PurchaseBillDAO : getGeneratedKey : " + e.getMessage());
                 throw e;
             }
 
@@ -133,11 +131,126 @@ public class PurchaseBillDAO{
                     if(rs.next()) return extractPurchaseBill(rs);
                 }
             }catch (SQLException e) {
-                System.out.println("PurchaseBillDAO : createBillItem : " + e.getMessage());
+                System.out.println("PurchaseBillDAO : extractBill : " + e.getMessage());
                 throw e;
             }
         }
         return null;
+    }
+
+    public List<PendingQuantityDTO> getPending() throws SQLException{
+        String query = "SELECT \n" +
+                "    v.name AS vendor_name, \n" +
+                "    p.name AS product_name, \n" +
+                "    SUM(bli.quantity) AS quantity_pending\n" +
+                "FROM purchase_bills pb\n" +
+                "JOIN vendors v ON pb.vendor_id = v.id\n" +
+                "JOIN bill_line_items bli ON pb.id = bli.bill_id\n" +
+                "JOIN products p ON bli.product_id = p.id\n" +
+                "WHERE pb.status = 0 \n" +
+                "GROUP BY v.name, p.name;";
+        try(Connection conn = DBConnection.getInstance().getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query);){
+            ResultSet rs = stmt.executeQuery();
+            List<PendingQuantityDTO> list = new ArrayList<>();
+            while (rs.next()){
+                list.add(new PendingQuantityDTO(rs.getString("vendor_name"),  null,
+                        rs.getString("product_name"),
+                        rs.getInt("quantity_pending")));
+            }
+            return list;
+        }catch (Exception e){
+            System.out.println("getPendingProductsByCustomer : " + e);
+            throw e;
+        }
+    }
+
+    public PendingQuantityDTO getPendingByVendor(int vendor_id) throws SQLException {
+        String query = "SELECT \n" +
+                "    p.name AS product_name, \n" +
+                "    SUM(bli.quantity) AS quantity_pending\n" +
+                "FROM purchase_bills pb\n" +
+                "JOIN vendors v ON pb.vendor_id = v.id\n" +
+                "JOIN bill_line_items bli ON pb.id = bli.bill_id\n" +
+                "JOIN products p ON bli.product_id = p.id\n" +
+                "WHERE pb.status = 0 AND v.id = ?\n" +
+                "GROUP BY v.name, p.name;";
+        try(Connection conn = DBConnection.getInstance().getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query);){
+            stmt.setInt(1, vendor_id);
+            ResultSet rs = stmt.executeQuery();
+            PendingQuantityDTO list = new PendingQuantityDTO();
+            if (rs.next()){
+                list = new PendingQuantityDTO(null, null,
+                        rs.getString("product_name"),
+                        rs.getInt("quantity_pending"));
+            }
+            return list;
+        }catch (Exception e){
+            System.out.println("getPendingProductsByCustomer : " + e);
+            throw e;
+        }
+    }
+
+
+    public List<ProductTranscationDTO> getProductsReceivedBetween(String from, String to) throws SQLException {
+        Long fromL = TimeUtil.stringToEpoch(from);
+        Long toL = TimeUtil.stringToEpoch(to);
+        String query = "SELECT \n" +
+                "    p.id AS product_id,\n" +
+                "    p.name AS product_name,\n" +
+                "    bli.quantity AS quantity,\n" +
+                "    pb.bill_date AS bill_date\n" +
+                "FROM purchase_bills pb\n" +
+                "JOIN bill_line_items bli ON pb.id = bli.bill_id\n" +
+                "JOIN products p ON p.id = bli.product_id\n" +
+                "WHERE pb.status = 1  \n" +
+                "  AND pb.bill_date BETWEEN ? AND ?\n" +
+                "ORDER BY pb.bill_date ASC, p.name ASC;";
+        try(Connection conn = DBConnection.getInstance().getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setLong(1,fromL);
+            stmt.setLong(2,toL);
+            ResultSet rs = stmt.executeQuery();
+            List<ProductTranscationDTO> list = new ArrayList<>();
+            while(rs.next()){
+                ProductTranscationDTO product = new ProductTranscationDTO();
+                product.setProduct_id(null);
+                product.setProduct_name(rs.getString("product_name"));
+                product.setQuantity(rs.getInt("quantity"));
+                product.setBill_date(TimeUtil.epochToString(rs.getLong("bill_date")));
+
+                list.add(product);
+            }
+            return list;
+        }catch (Exception e){
+            System.out.println("getProductsReceivedBetween : " + e);
+            throw e;
+        }
+    }
+
+    public List<PurchaseEntryDTO> getPurchaseEntryById(Integer pid) throws SQLException {
+        String query = "SELECT \n" +
+                "    bli.quantity, \n" +
+                "    bli.rate \n" +
+                "FROM bill_line_items bli\n" +
+                "JOIN purchase_bills pb ON pb.id = bli.bill_id\n" +
+                "WHERE pb.status = 1\n" +
+                "  AND bli.product_id = ?\n" +
+                "ORDER BY pb.bill_date ASC;";
+        try(Connection conn = DBConnection.getInstance().getConnection();
+            PreparedStatement ps = conn.prepareStatement(query)){
+            List<PurchaseEntryDTO> list = new ArrayList<>();
+            ps.setInt(1,pid);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+                list.add(new PurchaseEntryDTO(rs.getInt("quantity"),rs.getBigDecimal("rate")));
+            }
+            return list;
+        }catch (Exception e){
+            System.out.println("getPurchaseEntryById : " + e);
+            throw e;
+        }
     }
 
     private PurchaseBill extractPurchaseBill(ResultSet rs) throws SQLException {

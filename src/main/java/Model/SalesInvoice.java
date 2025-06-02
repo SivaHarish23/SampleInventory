@@ -1,6 +1,13 @@
 package Model;
 
+import DTO.BillLineItemDTO;
+import DTO.InvoiceLineItemDTO;
+import DTO.SalesInvoiceDTO;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SalesInvoice {
     private Integer id;
@@ -11,7 +18,38 @@ public class SalesInvoice {
     private String notes;
     private Long created_at;
     private Long updated_at;
+    private List<InvoiceLineItem> invoice_line_items;
 
+    public SalesInvoice(SalesInvoiceDTO salesInvoice){
+        try{
+            this.id = (salesInvoice.getId() != null) ? Integer.parseInt(salesInvoice.getId().substring(4)) : null;
+            this.invoice_date = (salesInvoice.getInvoice_date() != null) ? TimeUtil.stringToEpoch(salesInvoice.getInvoice_date()) : null;
+            this.customer_id = (salesInvoice.getCustomer_id() != null) ? Integer.parseInt(salesInvoice.getCustomer_id().substring(4)) : null;
+            this.amount = salesInvoice.getAmount();
+            this.status = (salesInvoice.getStatus() != null) ? SalesInvoiceStatus.getCode(salesInvoice.getStatus()) : null;
+            this.notes = salesInvoice.getNotes();
+            this.created_at = (salesInvoice.getCreated_at() != null) ? TimeUtil.stringToEpoch(salesInvoice.getCreated_at()) : null;
+            this.updated_at = (salesInvoice.getUpdated_at() != null) ? TimeUtil.stringToEpoch(salesInvoice.getUpdated_at()) : null;
+
+            List<InvoiceLineItemDTO> invoiceLineItemDTOs = salesInvoice.getInvoiceLineItems();
+
+            //attaching invoice id to invoices items
+            List<InvoiceLineItem> invoiceLineItems = new ArrayList<>();
+            if (invoiceLineItemDTOs != null)
+                for (InvoiceLineItemDTO invoiceDTO : invoiceLineItemDTOs) {
+                    invoiceDTO.setInvoice_id(salesInvoice.getId());
+
+                    invoiceLineItems.add(new InvoiceLineItem(invoiceDTO));
+                }
+
+            this.invoice_line_items = invoiceLineItems;
+        } catch (Exception e) {
+            System.out.println("Purchase Bill Constructor : " + e);
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    
     public SalesInvoice() {
     }
 
@@ -146,5 +184,13 @@ public class SalesInvoice {
 
     public void setUpdated_at(Long updated_at) {
         this.updated_at = updated_at;
+    }
+
+    public List<InvoiceLineItem> getInvoice_line_items() {
+        return invoice_line_items;
+    }
+
+    public void setInvoice_line_items(List<InvoiceLineItem> invoice_line_items) {
+        this.invoice_line_items = invoice_line_items;
     }
 }

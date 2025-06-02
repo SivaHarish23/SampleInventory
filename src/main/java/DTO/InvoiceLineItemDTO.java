@@ -1,6 +1,9 @@
 package DTO;
 
+import Model.InvoiceLineItem;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 public class InvoiceLineItemDTO {
     private String id;
@@ -9,6 +12,15 @@ public class InvoiceLineItemDTO {
     private Integer quantity;
     private BigDecimal rate;
     private BigDecimal amount;
+
+    public InvoiceLineItemDTO(InvoiceLineItem invoiceLineItem){
+        this.id = (invoiceLineItem.getId()!=null) ? "ITM-" + invoiceLineItem.getId() : null;
+        this.invoice_id = (invoiceLineItem.getInvoice_id()!=null) ? "INV-" + invoiceLineItem.getInvoice_id() : null;
+        this.product_id = (invoiceLineItem.getProduct_id()!=null) ? "PRO-" + invoiceLineItem.getProduct_id() : null;
+        this.quantity = invoiceLineItem.getQuantity();
+        this.rate = invoiceLineItem.getRate();
+        this.amount = invoiceLineItem.getRate().multiply(BigDecimal.valueOf(invoiceLineItem.getQuantity()));
+    }
 
     // Private constructor
     private InvoiceLineItemDTO(Builder builder) {
@@ -87,5 +99,29 @@ public class InvoiceLineItemDTO {
         public InvoiceLineItemDTO build() {
             return new InvoiceLineItemDTO(this);
         }
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setInvoice_id(String invoice_id) {
+        this.invoice_id = invoice_id;
+    }
+
+    public void setProduct_id(String product_id) {
+        this.product_id = product_id;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setRate(BigDecimal rate) {
+        this.rate = rate;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 }

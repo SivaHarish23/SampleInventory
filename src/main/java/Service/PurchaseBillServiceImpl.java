@@ -165,4 +165,5 @@ public class PurchaseBillServiceImpl implements PurchaseBillService {
     public boolean deletePurchaseBill(Integer id) throws SQLException {
         return purchaseBillDAO.deletePurchaseBill(id,DBConnection.getInstance().getConnection());
     }
+
 }

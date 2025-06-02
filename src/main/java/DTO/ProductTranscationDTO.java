@@ -1,29 +1,32 @@
 package DTO;
 
-import java.sql.Date;
+import java.lang.String;
+import java.math.BigDecimal;
 
 public class ProductTranscationDTO {
 
-    private int product_id;
+    private Integer product_id;
     private String product_name;
-    private int quantity;
-    private Date bill_date;
+    private Integer quantity;
+    private String bill_date;
+
+    private BigDecimal stock_value;
 
     public ProductTranscationDTO() {
     }
 
-    public ProductTranscationDTO(int product_id, String product_name, int quantity, Date bill_date) {
+    public ProductTranscationDTO(Integer product_id, String product_name, Integer quantity, String bill_date) {
         this.product_id = product_id;
         this.product_name = product_name;
         this.quantity = quantity;
         this.bill_date = bill_date;
     }
 
-    public int getProduct_id() {
+    public Integer getProduct_id() {
         return product_id;
     }
 
-    public void setProduct_id(int product_id) {
+    public void setProduct_id(Integer product_id) {
         this.product_id = product_id;
     }
 
@@ -35,19 +38,27 @@ public class ProductTranscationDTO {
         this.product_name = product_name;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 
-    public Date getBill_date() {
+    public String getBill_date() {
         return bill_date;
     }
 
-    public void setBill_date(Date bill_date) {
+    public void setBill_date(String bill_date) {
         this.bill_date = bill_date;
+    }
+
+    public BigDecimal getStock_value() {
+        return stock_value;
+    }
+
+    public void setStock_value(BigDecimal stock_value) {
+        this.stock_value = stock_value;
     }
 }

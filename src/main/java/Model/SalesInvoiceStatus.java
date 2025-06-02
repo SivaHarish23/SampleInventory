@@ -31,4 +31,11 @@ public enum SalesInvoiceStatus {
     public static int codeFromString(String name) {
         return fromString(name).getCode();
     }
+
+    public static int getCode(String name) {
+        return fromString(name).getCode();
+    }
+    public static String getString(int code) {
+        return fromCode(code).name();
+    }
 }

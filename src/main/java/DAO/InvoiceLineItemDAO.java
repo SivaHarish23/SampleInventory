@@ -1,62 +1,75 @@
 package DAO;
 
-import DTO.InvoiceLineItemDTO;
-import DTO.ProductDTO;
 import Model.InvoiceLineItem;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
 public class InvoiceLineItemDAO {
 
-    public InvoiceLineItemDTO createBillItem(InvoiceLineItem dto, Connection conn) throws SQLException {
+    public InvoiceLineItem createInvoiceItem(InvoiceLineItem item, Connection conn) throws SQLException {
         String sql = "INSERT INTO invoice_line_items (invoice_id, product_id, quantity, rate, amount) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, dto.getInvoice_id());
-            stmt.setInt(2, dto.getProduct_id());
-            stmt.setInt(3, dto.getQuantity());
-            stmt.setBigDecimal(4, dto.getRate());
-            stmt.setBigDecimal(5, dto.getAmount());
-
-            return getResultRow(conn,stmt,null);
+            stmt.setInt(1, item.getInvoice_id());
+            stmt.setInt(2, item.getProduct_id());
+            stmt.setInt(3, item.getQuantity());
+            stmt.setBigDecimal(4, item.getRate());
+            stmt.setBigDecimal(5, item.getAmount());
+            try {
+                return getResultRow(conn, stmt, null);
+            } catch (SQLException e) {
+                System.out.println("InvoiceLineItemDAO : createInvoiceItem : " + e.getMessage());
+                throw e;
+            }
         }
     }
 
-    public InvoiceLineItemDTO readBillItemById(int id, Connection conn) throws SQLException {
+    public InvoiceLineItem readInvoiceItemById(int id, Connection conn) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM invoice_line_items WHERE id = ?")) {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) extractInvoiceLineItem(rs);
+            try {
+                if (rs.next()) return extractInvoiceLineItem(rs);
+            } catch (SQLException e) {
+                System.out.println("InvoiceLineItemDAO : readInvoiceItemById : " + e.getMessage());
+                throw e;
+            }
         }
         return null;
     }
 
-    public List<InvoiceLineItemDTO> readAllBillItems(Connection conn) throws SQLException {
-        List<InvoiceLineItemDTO> items = new ArrayList<>();
+    public List<InvoiceLineItem> readAllInvoiceItems(Connection conn) throws SQLException {
+        List<InvoiceLineItem> items = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM invoice_line_items")) {
             ResultSet rs = stmt.executeQuery();
-
-            while (rs.next())
-                items.add(extractInvoiceLineItem(rs));
-
+            try {
+                while (rs.next()) {
+                    items.add(extractInvoiceLineItem(rs));
+                }
+            } catch (SQLException e) {
+                System.out.println("InvoiceLineItemDAO : readAllInvoiceItems : " + e.getMessage());
+                throw e;
+            }
         }
         return items;
     }
 
-    public List<InvoiceLineItemDTO> getItemsByBillId(int billId, Connection conn) throws SQLException {
-        List<InvoiceLineItemDTO> items = new ArrayList<>();
+    public List<InvoiceLineItem> getItemsByInvoiceId(int invoiceId, Connection conn) throws SQLException {
+        List<InvoiceLineItem> items = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM invoice_line_items WHERE invoice_id = ?")) {
-            stmt.setInt(1, billId);
+            stmt.setInt(1, invoiceId);
             ResultSet rs = stmt.executeQuery();
-
             while (rs.next())
                 items.add(extractInvoiceLineItem(rs));
-
+        }catch (SQLException e) {
+            System.out.println("InvoiceLineItemDAO : getItemsByInvoiceId : " + e.getMessage());
+            throw e;
         }
         return items;
     }
 
-    public InvoiceLineItemDTO updateBillItem(InvoiceLineItemDTO dto, Connection conn) throws SQLException {
+    public InvoiceLineItem updateInvoiceItem(InvoiceLineItem dto, Connection conn) throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE invoice_line_items SET ");
         List<Object> values = new ArrayList<>();
 
@@ -79,18 +92,21 @@ public class InvoiceLineItemDAO {
 
         sql.setLength(sql.length() - 2); // remove last comma
         sql.append(" WHERE id = ?");
-        int invoiceLineItemId = Integer.parseInt(dto.getId());
+        int invoiceLineItemId = dto.getId();
         values.add(invoiceLineItemId);
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS)) {
             for (int i = 0; i < values.size(); i++) {
                 stmt.setObject(i + 1, values.get(i));
             }
             return getResultRow(conn,stmt,invoiceLineItemId);
+        }catch (SQLException e) {
+            System.out.println("InvoiceLineItemDAO : updateInvoiceItem : " + e.getMessage());
+            throw e;
         }
     }
 
-    public boolean deleteBillItem(int id, Connection conn) throws SQLException {
+    public boolean deleteInvoiceItem(int id, Connection conn) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM invoice_line_items WHERE id = ?")) {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
@@ -98,7 +114,7 @@ public class InvoiceLineItemDAO {
     }
 
 
-    private InvoiceLineItemDTO getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
+    private InvoiceLineItem getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
         String fetch = "SELECT * FROM invoice_line_items WHERE id = ?";
 
         if(preparedStatement.executeUpdate() > 0){
@@ -118,14 +134,26 @@ public class InvoiceLineItemDAO {
     }
 
 
-    private InvoiceLineItemDTO extractInvoiceLineItem(ResultSet rs) throws SQLException {
-        return new InvoiceLineItemDTO.Builder()
-                .id(rs.getString("id"))
-                .invoice_id("BIL-" + rs.getInt("invoice_id"))
-                .product_id("PRO-" + rs.getInt("product_id"))
-                .quantity(rs.getInt("quantity"))
-                .rate(rs.getBigDecimal("rate"))
-                .amount(rs.getBigDecimal("amount"))
+    private InvoiceLineItem extractInvoiceLineItem(ResultSet rs) throws SQLException {
+        return new InvoiceLineItem.Builder()
+                .setId(rs.getInt("id"))
+                .setInvoice_id(rs.getInt("invoice_id"))
+                .setProduct_id(rs.getInt("product_id"))
+                .setQuantity(rs.getInt("quantity"))
+                .setRate(rs.getBigDecimal("rate"))
+                .setAmount(rs.getBigDecimal("amount"))
                 .build();
+    }
+
+    public BigDecimal getInvoiceAmount(int invoiceId, Connection conn) throws SQLException {
+        BigDecimal amount = BigDecimal.valueOf(0);
+        try {
+            List<InvoiceLineItem> items = getItemsByInvoiceId(invoiceId, conn);
+            for (InvoiceLineItem item : items) amount = amount.add(item.getAmount());
+        } catch (SQLException e) {
+            System.out.println("InvoiceLineItemDAO : getInvoiceAmount : " + e.getMessage());
+            throw e;
+        }
+        return amount;
     }
 }
