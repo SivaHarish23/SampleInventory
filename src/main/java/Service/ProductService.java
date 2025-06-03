@@ -3,14 +3,21 @@ package Service;
 import DAO.ProductDAO;
 import DTO.ProductDTO;
 import Model.Product;
+import Validators.ProductValidator;
 
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public class ProductService {
 
     private final ProductDAO productDAO = new ProductDAO();
+    private final ProductValidator validator = new ProductValidator();
+
+    public Map<String, String> validate(ProductDTO product) throws SQLException {
+        return validator.validate(product);
+    }
 
     public Product addProduct(Product productDTO) throws SQLException {
         Product product = new Product.Builder()
@@ -38,7 +45,13 @@ public class ProductService {
     }
 
     public boolean deleteProduct(Integer id) throws SQLException {
+        if (productDAO.isProductUsed(id)) {
+            throw new IllegalStateException("Cannot delete: Product (PRO- " + id + ") is used in purchase or sales transactions.");
+        }
         return productDAO.deleteProduct(id);
     }
 
+    public boolean exists(int id) throws SQLException {
+        return productDAO.findProduct(id)!=null;
+    }
 }

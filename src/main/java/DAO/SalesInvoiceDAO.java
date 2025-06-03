@@ -263,4 +263,7 @@ public class SalesInvoiceDAO{
                 .setUpdated_at(rs.getLong("updated_at"))
                 .build();
     }
+
+
+
 }

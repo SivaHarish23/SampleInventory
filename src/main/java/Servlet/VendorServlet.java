@@ -3,7 +3,9 @@ package Servlet;
 import DTO.VendorDTO;
 import DTO.PartyDTO;
 import Model.Vendor;
+import Service.CustomerService;
 import Service.VendorService;
+import Util.PrefixValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -12,7 +14,9 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/vendors/*")
 public class VendorServlet extends HttpServlet {
@@ -60,6 +64,11 @@ public class VendorServlet extends HttpServlet {
     private void handleGetVendor(String id, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.VENDOR);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
 
             VendorDTO vendorDTO = new VendorDTO(new PartyDTO.Builder().id(id));
             Vendor vendorUnmasked = Vendor.unMask(vendorDTO);
@@ -77,7 +86,12 @@ public class VendorServlet extends HttpServlet {
                 json.addProperty("message", "Vendor not found for ID: " + id);
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Vendor ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }  catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Error processing request");
             json.addProperty("error", e.getMessage());
@@ -103,6 +117,14 @@ public class VendorServlet extends HttpServlet {
             VendorDTO vendorDTO = gson.fromJson(request.getReader(), VendorDTO.class);
             System.out.println(vendorDTO.toString());
             Vendor vendorUnMasked = Vendor.unMask(vendorDTO);
+
+            VendorService vs = new VendorService();
+            Map<String, String> errors = vs.validate(vendorUnMasked);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
 
             Vendor vendor = vendorService.createParty(vendorUnMasked);
 
@@ -141,6 +163,12 @@ public class VendorServlet extends HttpServlet {
 
         JsonObject json = new JsonObject();
         try {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.VENDOR);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
             VendorDTO vendorDTO = gson.fromJson(request.getReader(), VendorDTO.class);
             // Ensure vendor ID matches path ID
             vendorDTO.setId(id);
@@ -148,6 +176,14 @@ public class VendorServlet extends HttpServlet {
             Vendor vendorUnMasked = Vendor.unMask(vendorDTO);
             if (vendorDTO == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
+                return;
+            }
+
+            VendorService vs = new VendorService();
+            Map<String, String> errors = vs.validate(vendorUnMasked);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
                 return;
             }
 
@@ -164,7 +200,12 @@ public class VendorServlet extends HttpServlet {
                 json.addProperty("message", "Vendor not found or no fields to update");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Vendor ID.");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process vendor update");
             json.addProperty("error", e.getMessage());
@@ -186,13 +227,19 @@ public class VendorServlet extends HttpServlet {
         }
 
         String id = pathInfo.substring(1);
-        VendorDTO vendorDTO = new VendorDTO(new PartyDTO.Builder().id(id));
-        Vendor vendorUnmasked = Vendor.unMask(vendorDTO);
-
         JsonObject json = new JsonObject();
 
         try {
-            if (vendorService.deleteParty(vendorUnmasked.getId())) {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.VENDOR);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
+            VendorDTO vendorDTO = new VendorDTO(new PartyDTO.Builder().id(id));
+            Vendor vendorUnmasked = Vendor.unMask(vendorDTO);
+
+            if (vendorService.deleteVendor(vendorUnmasked.getId())) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Vendor deleted successfully");
                 json.addProperty("vendor_id", id);
@@ -202,7 +249,12 @@ public class VendorServlet extends HttpServlet {
                 json.addProperty("message", "Vendor with given ID not found");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Vendor ID.");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }  catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process deletion");
             json.addProperty("error", e.getMessage());

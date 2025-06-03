@@ -4,8 +4,11 @@ import DTO.PartyDTO;
 import DTO.VendorDTO;
 import Model.Party;
 import Model.Vendor;
+import Util.DBConnection;
 import Util.TimeUtil;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -27,5 +30,15 @@ public class VendorDAO extends PartyDAO<Vendor> {
                         .created_at(rs.getLong("created_at"))
                         .updated_at(rs.getLong("updated_at"))
         );
+    }
+    public boolean isVendorUsed(int vendorId) throws SQLException {
+        String sql = "SELECT EXISTS (SELECT 1 FROM purchase_bills WHERE vendor_id = ?)";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, vendorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
     }
 }

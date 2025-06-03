@@ -3,10 +3,13 @@ package Servlet;
 import DTO.BillLineItemDTO;
 import DTO.PurchaseBillDTO;
 import Model.BillLineItem;
+import Model.InvoiceLineItem;
 import Model.PurchaseBill;
 import Service.PurchaseBillService;
 import Service.PurchaseBillServiceImpl;
+import Util.PrefixValidator;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import javax.servlet.annotation.WebServlet;
@@ -15,7 +18,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/purchaseBill/*")
 public class PurchaseBillServlet extends HttpServlet {
@@ -63,6 +68,12 @@ public class PurchaseBillServlet extends HttpServlet {
     private void handleGetBillById(String idStr, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(idStr , PrefixValidator.EntityType.BILL);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
             Integer id = Integer.parseInt(idStr.substring(4));
             PurchaseBill unMaskedbill = purchaseBillService.getPurchaseBillById(id);
             PurchaseBillDTO maskedBill = new PurchaseBillDTO(unMaskedbill);
@@ -100,16 +111,36 @@ public class PurchaseBillServlet extends HttpServlet {
             return;
         }
 
+
         JsonObject json = new JsonObject();
         try {
             PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
             System.out.println(dto.toString());
-//            for(BillLineItemDTO bdto : dto.getBillLineItems()) System.out.println(bdto.toString());
-//            System.out.println();
+
+            Map<String, List<String>> errors = purchaseBillService.validate(dto, false);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
             PurchaseBill purchaseBillUnMasked = new PurchaseBill(dto);
             System.out.println(purchaseBillUnMasked.toString());
-//            for(BillLineItem bdto : purchaseBillUnMasked.getBill_line_items()) System.out.println(bdto.toString());
-//            System.out.println();
+
+            List<BillLineItem> duplicates = purchaseBillService.findDuplicateLineItems(purchaseBillUnMasked.getBill_line_items());
+            if (!duplicates.isEmpty()) {
+                json.addProperty("status", "error");
+                json.addProperty("message", "Duplicate line items found");
+
+                JsonArray duplicateArray = new JsonArray();
+                for (BillLineItem dup : duplicates)
+                    duplicateArray.add(gson.toJsonTree(dup));
+
+                json.add("duplicates", duplicateArray);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                writeResponse(response, json);
+                return; // Stop further processing
+            }
 
             PurchaseBill insertedBill = purchaseBillService.createPurchaseBill(purchaseBillUnMasked);
             System.out.println(insertedBill.toString());
@@ -153,9 +184,45 @@ public class PurchaseBillServlet extends HttpServlet {
         }
         String idstr = pathInfo.substring(1);
         try {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(idstr , PrefixValidator.EntityType.BILL);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+            if (purchaseBillService.isReceived(Integer.parseInt(idstr))) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
+                json.addProperty("status", "forbidden");
+                json.addProperty("message", "Cannot modify a received purchase bill.");
+                writeResponse(response, json);
+                return;
+            }
+
             PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
             dto.setId(idstr);
+
+            Map<String, List<String>> errors = purchaseBillService.validate(dto, true);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
             PurchaseBill unMaskedBill = new PurchaseBill(dto);
+
+            List<BillLineItem> duplicates = purchaseBillService.findDuplicateLineItems(unMaskedBill.getBill_line_items());
+            if (!duplicates.isEmpty()) {
+                json.addProperty("status", "error");
+                json.addProperty("message", "Duplicate line items found");
+
+                JsonArray duplicateArray = new JsonArray();
+                for (BillLineItem dup : duplicates)
+                    duplicateArray.add(gson.toJsonTree(dup));
+
+                json.add("duplicates", duplicateArray);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                writeResponse(response, json);
+                return; // Stop further processing
+            }
 
             PurchaseBill updatedBill = purchaseBillService.updatePurchaseBill(unMaskedBill);
 
@@ -200,8 +267,14 @@ public class PurchaseBillServlet extends HttpServlet {
 
         JsonObject json = new JsonObject();
         String idStr = pathInfo.substring(1);
-        Integer id = Integer.parseInt(idStr.substring(4));
         try {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(idStr , PrefixValidator.EntityType.BILL);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+            Integer id = Integer.parseInt(idStr.substring(4));
+
             if (purchaseBillService.deletePurchaseBill(id)) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Purchase Bill deleted successfully");
@@ -212,6 +285,12 @@ public class PurchaseBillServlet extends HttpServlet {
                 json.addProperty("message", "Purchase Bill not found for ID: " + idStr);
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid bill ID format.");
+            json.addProperty("error", e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process Purchase Bill deletion");

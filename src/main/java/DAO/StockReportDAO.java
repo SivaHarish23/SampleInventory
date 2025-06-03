@@ -97,7 +97,7 @@ public class StockReportDAO {
                 "        FROM bill_line_items bli\n" +
                 "        JOIN purchase_bills pb ON pb.id = bli.bill_id\n" +
                 "        WHERE pb.status = 0 AND bli.product_id = p.id\n" +
-                "    ), 0) AS quantity_ordered,\n" +
+                "    ), 0) AS ordered_stock,\n" +
                 "\n" +
                 "    -- Quantity In (purchase bills with status = 1)\n" +
                 "    COALESCE((\n" +
@@ -145,7 +145,9 @@ public class StockReportDAO {
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement preparedStatement = conn.prepareStatement(query);
         ) {
+            preparedStatement.setInt(1,product_id);
             ResultSet rs = preparedStatement.executeQuery();
+
             if (rs.next()) {
                 return extract(rs);
             }

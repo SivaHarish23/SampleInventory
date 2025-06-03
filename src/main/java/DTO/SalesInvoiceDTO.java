@@ -24,7 +24,7 @@ public class SalesInvoiceDTO {
     public SalesInvoiceDTO(SalesInvoice salesInvoice){
         this.id = (salesInvoice.getId()!=null) ? "INV-" + salesInvoice.getId() : null;
         this.invoice_date = (salesInvoice.getInvoice_date()!=null) ? TimeUtil.epochToString(salesInvoice.getInvoice_date()) : null;
-        this.customer_id = (salesInvoice.getCustomer_id()!=null) ? "VEN-" + salesInvoice.getCustomer_id() : null;
+        this.customer_id = (salesInvoice.getCustomer_id()!=null) ? "CUS-" + salesInvoice.getCustomer_id() : null;
         this.amount = salesInvoice.getAmount();
         this.status = (salesInvoice.getStatus()!=null) ? SalesInvoiceStatus.getString(salesInvoice.getStatus()) : null;
         this.notes = salesInvoice.getNotes();

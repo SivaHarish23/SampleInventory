@@ -1,9 +1,11 @@
 package DTO;
 
+import DAO.ProductDAO;
 import Model.Product;
 import Util.TimeUtil;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 
 public class ProductDTO {
     private String id; // e.g., "PRO-1"
@@ -22,6 +24,37 @@ public class ProductDTO {
         this.opening_stock = p.getOpening_stock();
         this.created_at = (p.getCreated_at()!=null) ? TimeUtil.epochToString(p.getCreated_at()) : null;
         this.updated_at = (p.getUpdated_at()!=null) ? TimeUtil.epochToString(p.getUpdated_at()) : null;
+    }
+
+    private boolean isNameUnique(String name) throws SQLException {
+        try{
+            ProductDAO dao = new ProductDAO();
+            return dao.findProductByName(name) != null;
+        }catch (SQLException e){
+            throw new SQLException("Error checking name's uniqueness : " + e.getMessage());
+        }
+    }
+
+    public void validateProduct(ProductDTO product) throws IllegalArgumentException, SQLException {
+        if (product.getName() == null || product.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Product name is required.");
+        }
+
+        if (!isNameUnique(product.getName())) {
+            throw new IllegalArgumentException("Product name must be unique.");
+        }
+
+        if (product.getCost_price() == null || product.getCost_price().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Cost price must be greater than 0.");
+        }
+
+        if (product.getSelling_price() == null || product.getSelling_price().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Selling price must be greater than 0.");
+        }
+
+        if (product.getOpening_stock() == null || product.getOpening_stock() < 0) {
+            throw new IllegalArgumentException("Opening stock must be 0 or greater.");
+        }
     }
     
     public ProductDTO() {}

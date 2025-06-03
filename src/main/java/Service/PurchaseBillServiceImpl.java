@@ -1,21 +1,34 @@
 package Service;
 
+import DAO.BillLineItemDAO;
+import DAO.ProductDAO;
 import DAO.PurchaseBillDAO;
+import DAO.VendorDAO;
+import DTO.PurchaseBillDTO;
 import Model.BillLineItem;
 import Model.PurchaseBill;
+import Model.SalesInvoice;
 import Util.DBConnection;
+import Validators.PurchaseBillValidator;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PurchaseBillServiceImpl implements PurchaseBillService {
     private final PurchaseBillDAO purchaseBillDAO = new PurchaseBillDAO();
     private final BillLineItemServiceImpl billLineItemService = new BillLineItemServiceImpl();
+    private final PurchaseBillValidator validator = new PurchaseBillValidator(new VendorDAO(),new ProductDAO(), new BillLineItemDAO());
+
+    public Map<String, List<String>> validate(PurchaseBillDTO purchaseBillDTO, boolean isUpdate) throws SQLException {
+        return validator.validate(purchaseBillDTO, isUpdate);
+    }
+    public boolean isReceived(Integer billId) throws SQLException {
+        PurchaseBill bill = getPurchaseBillById(billId);
+        return bill != null && bill.getStatus() == 1;
+    }
 
     @Override
     public PurchaseBill createPurchaseBill(PurchaseBill bill) throws SQLException {
@@ -166,4 +179,26 @@ public class PurchaseBillServiceImpl implements PurchaseBillService {
         return purchaseBillDAO.deletePurchaseBill(id,DBConnection.getInstance().getConnection());
     }
 
+    public List<BillLineItem> findDuplicateLineItems(List<BillLineItem> items) {
+        Map<Integer, List<BillLineItem>> itemMap = new HashMap<>();
+        List<BillLineItem> duplicates = new ArrayList<>();
+
+        for (BillLineItem item : items) {
+            int productId = item.getProduct_id();
+            itemMap.putIfAbsent(productId, new ArrayList<>());
+            itemMap.get(productId).add(item);
+        }
+
+        for (Map.Entry<Integer, List<BillLineItem>> entry : itemMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                duplicates.addAll(entry.getValue());
+            }
+        }
+
+        return duplicates; // Empty list means no duplicates
+    }
+
+    public boolean exists(int id) throws SQLException {
+        return purchaseBillDAO.getBillById(id,DBConnection.getInstance().getConnection())!=null;
+    }
 }

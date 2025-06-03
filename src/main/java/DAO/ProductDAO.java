@@ -13,6 +13,22 @@ import java.util.List;
 
 public class ProductDAO {
 
+    public boolean isProductUsed(int productId) throws SQLException {
+        String sql = "SELECT EXISTS (" +
+                "SELECT 1 FROM bill_line_items WHERE product_id = ? " +
+                "UNION " +
+                "SELECT 1 FROM invoice_line_items WHERE product_id = ?" +
+                ")";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
+    }
+
     public Product insert(Product product) throws SQLException {
         Product productDTO = new Product();
         String sql = "INSERT INTO products (name, cost_price, selling_price, opening_stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
@@ -48,6 +64,15 @@ public class ProductDAO {
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.next()) return null;
+            return extractProduct(resultSet);
+        }
+    }public Product findProductByName(String name) throws SQLException {
+        String sql = "SELECT * FROM products WHERE name = ?";
+        try (Connection conn = DBConnection.getInstance().getConnection()) {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, name);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) return null;
             return extractProduct(resultSet);

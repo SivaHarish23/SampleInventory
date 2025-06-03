@@ -12,6 +12,7 @@ import java.util.List;
 public abstract class PartyDAO<T extends Party> {
 
     protected abstract String getTableName();
+
     protected abstract T createEntityFromResultSet(ResultSet rs) throws SQLException;
 
     public T insertParty(T party) throws SQLException {
@@ -20,11 +21,11 @@ public abstract class PartyDAO<T extends Party> {
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, party.getName());
             ps.setString(2, party.getLocation());
-            ps.setString(3,party.getPhoneNumber());
+            ps.setString(3, party.getPhoneNumber());
             ps.setLong(4, Instant.now().getEpochSecond());
-            ps.setLong(5,Instant.now().getEpochSecond());
+            ps.setLong(5, Instant.now().getEpochSecond());
 //            ResultSet rs = ps.executeQuery();
-            return getResultRow(conn,ps,null);
+            return getResultRow(conn, ps, null);
         }
     }
 
@@ -50,6 +51,18 @@ public abstract class PartyDAO<T extends Party> {
                 if (rs.next()) {
                     return createEntityFromResultSet(rs);
                 }
+            }
+        }
+        return null;
+    }
+
+    public T findByName(String name) throws SQLException {
+        String sql = "SELECT * FROM " + getTableName() + " WHERE name = ?";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return createEntityFromResultSet(rs);
             }
         }
         return null;
@@ -83,11 +96,11 @@ public abstract class PartyDAO<T extends Party> {
         values.add(partyId);
 
         try (Connection conn = DBConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString(),Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS)) {
             for (int i = 0; i < values.size(); i++)
                 ps.setObject(i + 1, values.get(i));
 
-            return getResultRow(conn,ps,partyId);
+            return getResultRow(conn, ps, partyId);
         }
     }
 
@@ -101,18 +114,18 @@ public abstract class PartyDAO<T extends Party> {
     }
 
     private T getResultRow(Connection conn, PreparedStatement preparedStatement, Integer pid) throws SQLException {
-        String fetch = "SELECT * FROM "+ getTableName() +" WHERE id = ?";
+        String fetch = "SELECT * FROM " + getTableName() + " WHERE id = ?";
 
-        if(preparedStatement.executeUpdate() > 0){
+        if (preparedStatement.executeUpdate() > 0) {
             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                 if (generatedKeys.next() && pid == null)
                     pid = generatedKeys.getInt(1);
             }
 
-            try(PreparedStatement ps = conn.prepareStatement(fetch)){
-                ps.setInt(1,pid);
-                try(ResultSet rs = ps.executeQuery()){
-                    if(rs.next()) return createEntityFromResultSet(rs);
+            try (PreparedStatement ps = conn.prepareStatement(fetch)) {
+                ps.setInt(1, pid);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return createEntityFromResultSet(rs);
                 }
             }
         }
