@@ -5,6 +5,7 @@ import DTO.ProductUpdateDTO;
 import Model.Product;
 import Service.ProductService;
 import Util.PrefixValidator;
+import Validators.ProductValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -21,6 +22,7 @@ import java.util.Map;
 public class ProductServlet extends HttpServlet {
 
     private final ProductService productService = new ProductService();
+    private final ProductValidator productValidator = new ProductValidator();
     private final Gson gson = new Gson();
 
     @Override
@@ -115,8 +117,7 @@ public class ProductServlet extends HttpServlet {
         try {
             ProductDTO productDTO = gson.fromJson(request.getReader(), ProductDTO.class);
 
-            ProductService ps = new ProductService();
-            Map<String, String> errors = ps.validate(productDTO);
+            Map<String, String> errors = productValidator.validate(productDTO);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
@@ -170,7 +171,7 @@ public class ProductServlet extends HttpServlet {
             ProductDTO dto = gson.fromJson(request.getReader(), ProductDTO.class);
 
             ProductService ps = new ProductService();
-            Map<String, String> errors = ps.validate(dto);
+            Map<String, String> errors = productValidator.validateForUpdate(dto);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());

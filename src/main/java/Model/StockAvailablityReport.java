@@ -1,7 +1,6 @@
 package Model;
 
 import DTO.StockAvailablityReportDTO;
-import DTO.StockReportDTO;
 
 public class StockAvailablityReport {
 

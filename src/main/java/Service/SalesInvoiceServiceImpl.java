@@ -1,8 +1,5 @@
 package Service;
 
-import DAO.CustomerDAO;
-import DAO.InvoiceLineItemDAO;
-import DAO.ProductDAO;
 import DAO.SalesInvoiceDAO;
 import DTO.InsufficientStockDTO;
 import DTO.SalesInvoiceDTO;
@@ -23,7 +20,7 @@ public class SalesInvoiceServiceImpl implements SalesInvoiceService{
     private final SalesInvoiceDAO salesinvoiceDAO = new SalesInvoiceDAO();
     private final InvoiceLineItemServiceImpl invoiceLineItemService = new InvoiceLineItemServiceImpl();
     private final StockService stockService = new StockService();
-    private final SalesInvoiceValidator validator = new SalesInvoiceValidator(new CustomerDAO(),new ProductDAO(),new InvoiceLineItemDAO());
+    private final SalesInvoiceValidator validator = new SalesInvoiceValidator();
 
     public Map<String, List<String>> validate(SalesInvoiceDTO salesInvoiceDTO, boolean isUpdate) throws SQLException {
         return validator.validate(salesInvoiceDTO , isUpdate);

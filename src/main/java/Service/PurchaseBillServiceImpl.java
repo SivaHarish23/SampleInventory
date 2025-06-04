@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class PurchaseBillServiceImpl implements PurchaseBillService {
     private final PurchaseBillDAO purchaseBillDAO = new PurchaseBillDAO();
     private final BillLineItemServiceImpl billLineItemService = new BillLineItemServiceImpl();
-    private final PurchaseBillValidator validator = new PurchaseBillValidator(new VendorDAO(),new ProductDAO(), new BillLineItemDAO());
+    private final PurchaseBillValidator validator = new PurchaseBillValidator();
 
     public Map<String, List<String>> validate(PurchaseBillDTO purchaseBillDTO, boolean isUpdate) throws SQLException {
         return validator.validate(purchaseBillDTO, isUpdate);

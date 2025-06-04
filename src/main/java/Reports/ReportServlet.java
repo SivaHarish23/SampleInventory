@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,7 +94,12 @@ public class ReportServlet extends HttpServlet {
             }
             writeResponse(response, json);
         } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format.");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid product id format.");
+            json.addProperty("error", e.getMessage());
+            e.printStackTrace();
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format.");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -127,7 +134,12 @@ public class ReportServlet extends HttpServlet {
             }
             writeResponse(response, json);
         } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format.");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid product ID format.");
+            json.addProperty("error", e.getMessage());
+            e.printStackTrace();
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format.");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -140,6 +152,7 @@ public class ReportServlet extends HttpServlet {
 
         try {
             if (vendorId == null) {
+                json.addProperty("status", "success");
                 json.add("to_be_received", gson.toJsonTree(purchaseBillDAO.getPending()));
             } else {
                 PrefixValidator validator = new PrefixValidator();
@@ -148,12 +161,17 @@ public class ReportServlet extends HttpServlet {
                     throw new NumberFormatException(error);
                 }
                 int vid = Integer.parseInt(vendorId.substring(4)); // assumes "ven_" prefix or similar
+                json.addProperty("status", "success");
                 json.add("to_be_received", gson.toJsonTree(purchaseBillDAO.getPendingByVendor(vid)));
             }
-            json.addProperty("status", "success");
             writeResponse(response, json);
         } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid vendor_id format");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid vendor ID format.");
+            json.addProperty("error", e.getMessage());
+            e.printStackTrace();
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid vendor_id format");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -177,10 +195,14 @@ public class ReportServlet extends HttpServlet {
                 json.addProperty("status", "success");
                 json.add("to_be_delivered", gson.toJsonTree(salesInvoiceDAO.getPendingByCustomer(cid)));
             }
-
             writeResponse(response, json);
         } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer_id format");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid customer ID format.");
+            json.addProperty("error", e.getMessage());
+            e.printStackTrace();
+//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer_id format");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -188,15 +210,56 @@ public class ReportServlet extends HttpServlet {
         }
     }
 
+//    private void handleReceivedBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        String from = request.getParameter("from");
+//        String to = request.getParameter("to");
+//        JsonObject json = new JsonObject();
+//
+//        try {
+//            json.addProperty("status", "success");
+//            json.add("data", gson.toJsonTree(purchaseBillDAO.getProductsReceivedBetween(from, to)));
+//            writeResponse(response, json);
+//        } catch (SQLException e) {
+//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
+//        } catch (Exception e) {
+//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+//        }
+//    }
+//
+//    private void handleDeliveredBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        String from = request.getParameter("from");
+//        String to = request.getParameter("to");
+//        JsonObject json = new JsonObject();
+//
+//        try {
+//            json.addProperty("status", "success");
+//            json.add("data", gson.toJsonTree(salesInvoiceDAO.getProductsDeliveredBetween(from, to)));
+//            writeResponse(response, json);
+//        } catch (SQLException e) {
+//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
+//        } catch (Exception e) {
+//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+//        }
+//    }
     private void handleReceivedBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String from = request.getParameter("from");
         String to = request.getParameter("to");
         JsonObject json = new JsonObject();
 
         try {
-            json.add("data", gson.toJsonTree(purchaseBillDAO.getProductsReceivedBetween(from, to)));
+            LocalDate fromDate = parseAndValidateDate(from, "from");
+            LocalDate toDate = parseAndValidateDate(to, "to");
+
+            if (fromDate.isAfter(toDate)) {
+                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "'from' date must be before 'to' date.");
+                return;
+            }
+
             json.addProperty("status", "success");
+            json.add("data", gson.toJsonTree(purchaseBillDAO.getProductsReceivedBetween(from, to)));
             writeResponse(response, json);
+        } catch (IllegalArgumentException e) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -210,13 +273,34 @@ public class ReportServlet extends HttpServlet {
         JsonObject json = new JsonObject();
 
         try {
-            json.add("data", gson.toJsonTree(salesInvoiceDAO.getProductsDeliveredBetween(from, to)));
+            LocalDate fromDate = parseAndValidateDate(from, "from");
+            LocalDate toDate = parseAndValidateDate(to, "to");
+
+            if (fromDate.isAfter(toDate)) {
+                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "'from' date must be before 'to' date.");
+                return;
+            }
+
             json.addProperty("status", "success");
+            json.add("data", gson.toJsonTree(salesInvoiceDAO.getProductsDeliveredBetween(from, to)));
             writeResponse(response, json);
+        } catch (IllegalArgumentException e) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
+        }
+    }
+
+    private LocalDate parseAndValidateDate(String dateStr, String paramName) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("Missing required query parameter: " + paramName);
+        }
+        try {
+            return LocalDate.parse(dateStr.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format for '" + paramName + "'. Expected yyyy-MM-dd.");
         }
     }
 

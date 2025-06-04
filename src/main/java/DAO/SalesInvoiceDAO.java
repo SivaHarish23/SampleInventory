@@ -209,7 +209,7 @@ public class SalesInvoiceDAO{
                 "JOIN products p ON p.id = ili.product_id\n" +
                 "WHERE si.status = 1  \n" +
                 "  AND si.invoice_date BETWEEN ? AND ?\n" +
-                "ORDER BY si.invoice_date ASC, p.name ASC;";
+                "ORDER BY si.invoice_date ASC;";
         try(Connection conn = DBConnection.getInstance().getConnection();
         PreparedStatement stmt = conn.prepareStatement(query)){
             stmt.setLong(1,fromL);

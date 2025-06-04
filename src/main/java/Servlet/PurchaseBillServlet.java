@@ -1,13 +1,11 @@
 package Servlet;
 
-import DTO.BillLineItemDTO;
 import DTO.PurchaseBillDTO;
 import Model.BillLineItem;
-import Model.InvoiceLineItem;
 import Model.PurchaseBill;
-import Service.PurchaseBillService;
 import Service.PurchaseBillServiceImpl;
 import Util.PrefixValidator;
+import Validators.PurchaseBillValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -27,6 +25,7 @@ public class PurchaseBillServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
     private final PurchaseBillServiceImpl purchaseBillService = new PurchaseBillServiceImpl();
+    private final PurchaseBillValidator purchaseBillValidator = new PurchaseBillValidator();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -117,7 +116,7 @@ public class PurchaseBillServlet extends HttpServlet {
             PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
             System.out.println(dto.toString());
 
-            Map<String, List<String>> errors = purchaseBillService.validate(dto, false);
+            Map<String, List<String>> errors = purchaseBillValidator.validateForCreate(dto);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
@@ -189,7 +188,7 @@ public class PurchaseBillServlet extends HttpServlet {
             if (error != null){
                 throw new NumberFormatException(error);
             }
-            if (purchaseBillService.isReceived(Integer.parseInt(idstr))) {
+            if (purchaseBillService.isReceived(Integer.parseInt(idstr.substring(4)))) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
                 json.addProperty("status", "forbidden");
                 json.addProperty("message", "Cannot modify a received purchase bill.");
@@ -200,7 +199,7 @@ public class PurchaseBillServlet extends HttpServlet {
             PurchaseBillDTO dto = gson.fromJson(request.getReader(), PurchaseBillDTO.class);
             dto.setId(idstr);
 
-            Map<String, List<String>> errors = purchaseBillService.validate(dto, true);
+            Map<String, List<String>> errors = purchaseBillValidator.validateForCreate(dto);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
@@ -263,7 +262,6 @@ public class PurchaseBillServlet extends HttpServlet {
             sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing endpoint or bill ID");
             return;
         }
-
 
         JsonObject json = new JsonObject();
         String idStr = pathInfo.substring(1);

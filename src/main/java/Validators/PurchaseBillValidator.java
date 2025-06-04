@@ -1,36 +1,24 @@
 package Validators;
 
-import DAO.BillLineItemDAO;
-import DAO.ProductDAO;
-import DAO.VendorDAO;
 import DTO.BillLineItemDTO;
 import DTO.PurchaseBillDTO;
 import Model.PurchaseBillStatus;
-import Util.DBConnection;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+import Util.PrefixValidator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import java.util.*;
 
 public class PurchaseBillValidator {
 
-    private final VendorDAO vendorDAO;
-    private final ProductDAO productDAO;
-    private final BillLineItemDAO billLineItemDAO;
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-
-    public PurchaseBillValidator(VendorDAO vendorDAO, ProductDAO productDAO, BillLineItemDAO billLineItemDAO) {
-        this.vendorDAO = vendorDAO;
-        this.productDAO = productDAO;
-        this.billLineItemDAO = billLineItemDAO;
-    }
 
     public Map<String, List<String>> validateForCreate(PurchaseBillDTO bill) throws SQLException {
         return validate(bill, false);
@@ -46,32 +34,34 @@ public class PurchaseBillValidator {
         // Vendor ID check
         List<String> vendorErrors = new ArrayList<>();
         if (bill.getVendor_id() == null || bill.getVendor_id().trim().isEmpty()) {
-            vendorErrors.add("Vendor ID is required.");
+            if(!isUpdate) vendorErrors.add("Vendor ID is required.");
         } else {
-            try {
-                int vendorId = Integer.parseInt(bill.getVendor_id().replaceAll("\\D", ""));
-                if (vendorDAO.getPartyById(vendorId) == null) {
-                    vendorErrors.add("Vendor does not exist.");
-                }
-            } catch (NumberFormatException e) {
-                vendorErrors.add("Invalid vendor ID format.");
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(bill.getVendor_id(), PrefixValidator.EntityType.VENDOR);
+            if (error != null) {
+                vendorErrors.add(error);
             }
         }
         if (!vendorErrors.isEmpty()) errors.put("vendor_id", vendorErrors);
 
         // Bill date validation
-        try {
-            LocalDate.parse(bill.getBill_date(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        } catch (Exception e) {
-            errors.put("bill_date", Collections.singletonList("Invalid bill date format. Use yyyy-MM-dd."));
+        if (bill.getBill_date() == null || bill.getBill_date().trim().isEmpty()) {
+            if(!isUpdate) errors.put("bill_date", Collections.singletonList("Bill Date is required"));
+        } else {
+            try {
+                LocalDate.parse(bill.getBill_date(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } catch (Exception e) {
+                errors.put("bill_date", Collections.singletonList("Invalid bill date format. Use yyyy-MM-dd."));
+            }
         }
 
-        // Status validation (optional)
-        if (bill.getStatus() != null && !bill.getStatus().trim().isEmpty()) {
+        if (bill.getStatus() == null || bill.getStatus().trim().isEmpty()) {
+            if(!isUpdate) errors.put("status", Collections.singletonList("Status is required"));
+        } else {
             try {
-                PurchaseBillStatus.valueOf(bill.getStatus().toUpperCase());
+                PurchaseBillStatus.valueOf(bill.getStatus());
             } catch (IllegalArgumentException e) {
-                errors.put("status", Collections.singletonList("Invalid status value."));
+                errors.put("status", Collections.singletonList("Invalid status. Must be PAID or RECEIVED."));
             }
         }
 
@@ -87,13 +77,10 @@ public class PurchaseBillValidator {
                     if (item.getId() == null || item.getId().trim().isEmpty()) {
                         itemErrors.add("Line item ID is required for update.");
                     } else {
-                        try (Connection conn = DBConnection.getInstance().getConnection()) {
-                            int id = Integer.parseInt(item.getId().replaceAll("\\D", ""));
-                            if (billLineItemDAO.readBillItemById(id, conn) == null) {
-                                itemErrors.add("Line item ID does not exist.");
-                            }
-                        } catch (NumberFormatException e) {
-                            itemErrors.add("Invalid line item ID format.");
+                        PrefixValidator validator = new PrefixValidator();
+                        String error = validator.validatePrefixedId(item.getId(), "bill");
+                        if (error != null) {
+                            itemErrors.add(error);
                         }
                     }
                 } else {
@@ -106,13 +93,10 @@ public class PurchaseBillValidator {
                 if (item.getProduct_id() == null || item.getProduct_id().trim().isEmpty()) {
                     itemErrors.add("Product ID is required.");
                 } else {
-                    try {
-                        int productId = Integer.parseInt(item.getProduct_id().replaceAll("\\D", ""));
-                        if (productDAO.findProduct(productId) == null) {
-                            itemErrors.add("Product does not exist.");
-                        }
-                    } catch (NumberFormatException e) {
-                        itemErrors.add("Invalid product ID format.");
+                    PrefixValidator validator = new PrefixValidator();
+                    String error = validator.validatePrefixedId(item.getProduct_id(), PrefixValidator.EntityType.PRODUCT);
+                    if (error != null) {
+                        itemErrors.add(error);
                     }
                 }
 
@@ -131,7 +115,6 @@ public class PurchaseBillValidator {
                 }
             }
         }
-
         return errors;
     }
 }

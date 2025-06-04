@@ -7,6 +7,7 @@ import Model.InvoiceLineItem;
 import Model.SalesInvoice;
 import Service.SalesInvoiceServiceImpl;
 import Util.PrefixValidator;
+import Validators.SalesInvoiceValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -28,6 +29,7 @@ public class SalesInvoiceServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
     private final SalesInvoiceServiceImpl salesInvoiceService = new SalesInvoiceServiceImpl();
+    private final SalesInvoiceValidator salesInvoiceValidator = new SalesInvoiceValidator();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -120,7 +122,7 @@ public class SalesInvoiceServlet extends HttpServlet {
             SalesInvoiceDTO dto = gson.fromJson(request.getReader(), SalesInvoiceDTO.class);
             System.out.println(dto.toString());
 
-            Map<String, List<String>> errors = salesInvoiceService.validate(dto, false);
+            Map<String, List<String>> errors = salesInvoiceValidator.validateForCreate(dto);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
@@ -208,7 +210,7 @@ public class SalesInvoiceServlet extends HttpServlet {
             if (error != null){
                 throw new NumberFormatException(error);
             }
-            if (salesInvoiceService.isDelivered(Integer.parseInt(idstr))) {
+            if (salesInvoiceService.isDelivered(Integer.parseInt(idstr.substring(4)))) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
                 json.addProperty("status", "forbidden");
                 json.addProperty("message", "Cannot modify a delivered sales invoice.");
@@ -219,7 +221,7 @@ public class SalesInvoiceServlet extends HttpServlet {
             SalesInvoiceDTO dto = gson.fromJson(request.getReader(), SalesInvoiceDTO.class);
             dto.setId(idstr);
 
-            Map<String, List<String>> errors = salesInvoiceService.validate(dto, true);
+            Map<String, List<String>> errors = salesInvoiceValidator.validateForUpdate(dto);
             if (!errors.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
                 gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());

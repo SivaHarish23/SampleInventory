@@ -22,7 +22,7 @@ public class PartyValidator<T extends Party, D extends PartyDAO<T>> {
         if (party.getName() == null || party.getName().trim().isEmpty()) {
             errors.put("name", "Party name is required.");
         } else if (dao.findByName(party.getName()) != null) {
-            errors.put("name", "Party name must be unique.");
+            errors.put("name", "Party name already exists.");
         }
 
         // Validate phone number (optional, but must be valid if provided)
