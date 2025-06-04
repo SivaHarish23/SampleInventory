@@ -140,7 +140,9 @@ public class PurchaseBillDAO{
 
     public List<PendingQuantityDTO> getPending() throws SQLException{
         String query = "SELECT \n" +
+                "    v.id AS vendor_id, \n" +
                 "    v.name AS vendor_name, \n" +
+                "    p.id AS product_id,\n" +
                 "    p.name AS product_name, \n" +
                 "    SUM(bli.quantity) AS quantity_pending\n" +
                 "FROM purchase_bills pb\n" +
@@ -148,15 +150,18 @@ public class PurchaseBillDAO{
                 "JOIN bill_line_items bli ON pb.id = bli.bill_id\n" +
                 "JOIN products p ON bli.product_id = p.id\n" +
                 "WHERE pb.status = 0 \n" +
-                "GROUP BY v.name, p.name;";
+                "GROUP BY v.id, p.id;";
         try(Connection conn = DBConnection.getInstance().getConnection();
             PreparedStatement stmt = conn.prepareStatement(query);){
             ResultSet rs = stmt.executeQuery();
             List<PendingQuantityDTO> list = new ArrayList<>();
             while (rs.next()){
-                list.add(new PendingQuantityDTO(rs.getString("vendor_name"),  null,
+                PendingQuantityDTO p = new PendingQuantityDTO(rs.getString("vendor_name"),  null,
                         rs.getString("product_name"),
-                        rs.getInt("quantity_pending")));
+                        rs.getInt("quantity_pending"));
+                p.setVendor_id(rs.getInt("vendor_id")+"");
+                p.setProduct_id(rs.getInt("product_id")+"");
+                list.add(p);
             }
             return list;
         }catch (Exception e){
@@ -167,6 +172,7 @@ public class PurchaseBillDAO{
 
     public PendingQuantityDTO getPendingByVendor(int vendor_id) throws SQLException {
         String query = "SELECT \n" +
+                "    p.id AS product_id,\n" +
                 "    p.name AS product_name, \n" +
                 "    SUM(bli.quantity) AS quantity_pending\n" +
                 "FROM purchase_bills pb\n" +
@@ -174,16 +180,18 @@ public class PurchaseBillDAO{
                 "JOIN bill_line_items bli ON pb.id = bli.bill_id\n" +
                 "JOIN products p ON bli.product_id = p.id\n" +
                 "WHERE pb.status = 0 AND v.id = ?\n" +
-                "GROUP BY v.name, p.name;";
+                "GROUP BY v.id, p.id;";
         try(Connection conn = DBConnection.getInstance().getConnection();
             PreparedStatement stmt = conn.prepareStatement(query);){
             stmt.setInt(1, vendor_id);
             ResultSet rs = stmt.executeQuery();
             PendingQuantityDTO list = new PendingQuantityDTO();
             if (rs.next()){
-                list = new PendingQuantityDTO(null, null,
+                PendingQuantityDTO p = new PendingQuantityDTO(null, null,
                         rs.getString("product_name"),
                         rs.getInt("quantity_pending"));
+                p.setProduct_id(rs.getInt("product_id")+"");
+                return p;
             }
             return list;
         }catch (Exception e){
@@ -206,7 +214,7 @@ public class PurchaseBillDAO{
                 "JOIN products p ON p.id = bli.product_id\n" +
                 "WHERE pb.status = 1  \n" +
                 "  AND pb.bill_date BETWEEN ? AND ?\n" +
-                "ORDER BY pb.bill_date ASC, p.name ASC;";
+                "ORDER BY pb.bill_date ASC;";
         try(Connection conn = DBConnection.getInstance().getConnection();
             PreparedStatement stmt = conn.prepareStatement(query)){
             stmt.setLong(1,fromL);
@@ -215,7 +223,7 @@ public class PurchaseBillDAO{
             List<ProductTranscationDTO> list = new ArrayList<>();
             while(rs.next()){
                 ProductTranscationDTO product = new ProductTranscationDTO();
-                product.setProduct_id(null);
+                product.setProduct_id(rs.getInt("product_id")+"");
                 product.setProduct_name(rs.getString("product_name"));
                 product.setQuantity(rs.getInt("quantity"));
                 product.setBill_date(TimeUtil.epochToString(rs.getLong("bill_date")));

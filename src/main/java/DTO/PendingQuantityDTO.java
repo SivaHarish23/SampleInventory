@@ -1,8 +1,13 @@
 package DTO;
 
 public class PendingQuantityDTO {
-    private String vendor_name;
+
+
+    private String customer_id;
     private String customer_name;
+    private String vendor_id;
+    private String vendor_name;
+    private String product_id;
     private String product_name;
     private Integer pending_quantity;
 
@@ -14,6 +19,30 @@ public class PendingQuantityDTO {
         this.customer_name = customer_name;
         this.product_name = product_name;
         this.pending_quantity = pending_quantity;
+    }
+
+    public String getProduct_id() {
+        return product_id;
+    }
+
+    public void setProduct_id(String product_id) {
+        this.product_id = "PRO-" + product_id;
+    }
+
+    public String getVendor_id() {
+        return vendor_id;
+    }
+
+    public void setVendor_id(String vendor_id) {
+        this.vendor_id = "VEN-"+vendor_id;
+    }
+
+    public String getCustomer_id() {
+        return customer_id;
+    }
+
+    public void setCustomer_id(String customer_id) {
+        this.customer_id = "CUS-"+customer_id;
     }
 
     public String getVendor_name() {
