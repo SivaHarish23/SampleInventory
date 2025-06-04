@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 
 public class ProductTranscationDTO {
 
-    private Integer product_id;
+    private String product_id;
     private String product_name;
     private Integer quantity;
     private String bill_date;
@@ -15,19 +15,19 @@ public class ProductTranscationDTO {
     public ProductTranscationDTO() {
     }
 
-    public ProductTranscationDTO(Integer product_id, String product_name, Integer quantity, String bill_date) {
+    public ProductTranscationDTO(String product_id, String product_name, Integer quantity, String bill_date) {
         this.product_id = product_id;
         this.product_name = product_name;
         this.quantity = quantity;
         this.bill_date = bill_date;
     }
 
-    public Integer getProduct_id() {
+    public String getProduct_id() {
         return product_id;
     }
 
-    public void setProduct_id(Integer product_id) {
-        this.product_id = product_id;
+    public void setProduct_id(String product_id) {
+        this.product_id = "PRO-"+product_id;
     }
 
     public String getProduct_name() {

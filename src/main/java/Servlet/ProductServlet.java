@@ -1,7 +1,6 @@
 package Servlet;
 
 import DTO.ProductDTO;
-import DTO.ProductUpdateDTO;
 import Model.Product;
 import Service.ProductService;
 import Util.PrefixValidator;

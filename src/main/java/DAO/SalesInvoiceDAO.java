@@ -144,7 +144,9 @@ public class SalesInvoiceDAO{
 
     public List<PendingQuantityDTO> getPending() throws SQLException{
         String query = "SELECT \n" +
+                "    c.id AS customer_id,\n" +
                 "    c.name AS customer_name, \n" +
+                "    p.id AS product_id,\n" +
                 "    p.name AS product_name, \n" +
                 "    SUM(ili.quantity) AS quantity_pending\n" +
                 "FROM sales_invoices si\n" +
@@ -152,15 +154,18 @@ public class SalesInvoiceDAO{
                 "JOIN invoice_line_items ili ON si.id = ili.invoice_id\n" +
                 "JOIN products p ON ili.product_id = p.id\n" +
                 "WHERE si.status = 0\n" +
-                "GROUP BY c.name, p.name;";
+                "GROUP BY c.id, p.id;";
         try(Connection conn = DBConnection.getInstance().getConnection();
         PreparedStatement stmt = conn.prepareStatement(query);){
             ResultSet rs = stmt.executeQuery();
             List<PendingQuantityDTO> list = new ArrayList<>();
             while (rs.next()){
-                list.add(new PendingQuantityDTO(null,rs.getString("customer_name"),
+                PendingQuantityDTO p = new PendingQuantityDTO(null,rs.getString("customer_name"),
                         rs.getString("product_name"),
-                        rs.getInt("quantity_pending")));
+                        rs.getInt("quantity_pending"));
+                p.setCustomer_id(rs.getInt("customer_id")+"");
+                p.setProduct_id(rs.getInt("product_id")+"");
+                list.add(p);
             }
             return list;
         }catch (Exception e){
@@ -171,6 +176,7 @@ public class SalesInvoiceDAO{
 
     public PendingQuantityDTO getPendingByCustomer(int customer_id) throws SQLException {
         String query = "SELECT \n" +
+                "    p.id AS product_id,\n" +
                 "    p.name AS product_name, \n" +
                 "    SUM(ili.quantity) AS quantity_pending\n" +
                 "FROM sales_invoices si\n" +
@@ -178,7 +184,7 @@ public class SalesInvoiceDAO{
                 "JOIN invoice_line_items ili ON si.id = ili.invoice_id\n" +
                 "JOIN products p ON ili.product_id = p.id\n" +
                 "WHERE si.status = 0 AND c.id = ?\n" +
-                "GROUP BY c.name, p.name;";
+                "GROUP BY c.id, p.id;";
         try(Connection conn = DBConnection.getInstance().getConnection();
             PreparedStatement stmt = conn.prepareStatement(query);){
             stmt.setInt(1, customer_id);
@@ -218,7 +224,7 @@ public class SalesInvoiceDAO{
             List<ProductTranscationDTO> list = new ArrayList<>();
             while(rs.next()){
                 ProductTranscationDTO product = new ProductTranscationDTO();
-                product.setProduct_id(null);
+                product.setProduct_id(rs.getInt("product_id")+"");
                 product.setProduct_name(rs.getString("product_name"));
                 product.setQuantity(rs.getInt("quantity"));
                 product.setBill_date(TimeUtil.epochToString(rs.getLong("bill_date")));
