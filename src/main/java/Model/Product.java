@@ -1,22 +1,37 @@
 package Model;
 
+import DTO.ProductDTO;
+import Util.TimeUtil;
+
 import java.math.BigDecimal;
 
 public class Product {
-    private int id;
+    private Integer id;
     private String name;
     private BigDecimal cost_price;
     private BigDecimal selling_price;
-    private int opening_stock;
+    private Integer opening_stock;
+    private Long created_at;
+    private Long updated_at;
+
+    public Product(ProductDTO dto){
+        this.id = (dto.getId() != null) ? Integer.parseInt(dto.getId().substring(4)) : null;
+        this.name = dto.getName();
+        this.cost_price = dto.getCost_price();
+        this.selling_price = dto.getSelling_price();
+        this.opening_stock = dto.getOpening_stock();
+        this.created_at = (dto.getCreated_at()!=null) ? TimeUtil.stringToEpoch(dto.getCreated_at()) : null;
+        this.updated_at = (dto.getUpdated_at()!=null) ? TimeUtil.stringToEpoch(dto.getUpdated_at()) : null;
+    }
 
     public Product() {
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -44,12 +59,28 @@ public class Product {
         this.selling_price = selling_price;
     }
 
-    public int getOpening_stock() {
+    public Integer getOpening_stock() {
         return opening_stock;
     }
 
-    public void setOpening_stock(int opening_stock) {
+    public void setOpening_stock(Integer opening_stock) {
         this.opening_stock = opening_stock;
+    }
+
+    public Long getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(Long created_at) {
+        this.created_at = created_at;
+    }
+
+    public Long getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(Long updated_at) {
+        this.updated_at = updated_at;
     }
 
     private Product(Builder builder) {
@@ -58,16 +89,20 @@ public class Product {
         this.cost_price = builder.cost_price;
         this.selling_price = builder.selling_price;
         this.opening_stock = builder.opening_stock;
+        this.created_at = builder.created_at;
+        this.updated_at = builder.updated_at;
     }
 
     public static class Builder {
-        private int id;
+        private Integer id;
         private String name;
         private BigDecimal cost_price;
         private BigDecimal selling_price;
-        private int opening_stock = 0;
+        private Integer opening_stock = 0;
+        private Long created_at;
+        private Long updated_at;
 
-        public Builder id(int id) {
+        public Builder id(Integer id) {
             this.id = id;
             return this;
         }
@@ -87,8 +122,18 @@ public class Product {
             return this;
         }
 
-        public Builder opening_stock(int opening_stock) {
+        public Builder opening_stock(Integer opening_stock) {
             this.opening_stock = opening_stock;
+            return this;
+        }
+
+        public Builder created_at(Long created_at) {
+            this.created_at = created_at;
+            return this;
+        }
+
+        public Builder updated_at(Long updated_at) {
+            this.updated_at = updated_at;
             return this;
         }
 
@@ -105,6 +150,8 @@ public class Product {
                 ", cost_price=" + cost_price +
                 ", selling_price=" + selling_price +
                 ", opening_stock=" + opening_stock +
+                ", created_at=" + created_at +
+                ", updated_at=" + updated_at +
                 '}';
     }
 }

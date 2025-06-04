@@ -5,28 +5,18 @@ import DTO.CustomerDTO;
 import Model.Customer;
 
 import java.sql.SQLException;
-import java.util.List;
 
-public class CustomerService {
-    private final CustomerDAO customerDAO = new CustomerDAO();
-    public boolean createCustomer(CustomerDTO dto) throws SQLException {
-        Customer customer = new Customer(dto.getId(),dto.getName(),dto.getLocation());
-        return customerDAO.insertCustomer(customer);
-    }
+public class CustomerService extends PartyService<Customer,CustomerDAO>{
 
-    public List<Customer> getAllCustomers() throws SQLException {
-        return customerDAO.getAllRows();
-    }
-
-    public Customer getCustomerById(int id) throws SQLException {
-        return customerDAO.getCustomer(id);
-    }
-
-    public boolean updateCustomer(Customer customer) throws SQLException {
-        return customerDAO.updateCustomer(customer);
+    public CustomerService() {
+        super(new CustomerDAO());
     }
 
     public boolean deleteCustomer(int id) throws SQLException {
-        return customerDAO.deleteCustomer(id);
+        if (new CustomerDAO().isCustomerUsed(id)) {
+            throw new IllegalStateException("Cannot delete: Customer (CUS-" + id + ") is associated with sales invoices.");
+        }
+        return new CustomerDAO().deleteParty(id);
     }
+
 }

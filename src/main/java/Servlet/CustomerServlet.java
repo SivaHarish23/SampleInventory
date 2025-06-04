@@ -1,8 +1,11 @@
 package Servlet;
 
 import DTO.CustomerDTO;
+import DTO.PartyDTO;
 import Model.Customer;
 import Service.CustomerService;
+import Service.ProductService;
+import Util.PrefixValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -10,7 +13,10 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/customers/*")
 public class CustomerServlet extends HttpServlet {
@@ -29,22 +35,22 @@ public class CustomerServlet extends HttpServlet {
         } else {
             // GET /customers/{id} – Retrieve customer by ID
             String idStr = pathInfo.substring(1); // Remove leading '/'
-            try {
-                int id = Integer.parseInt(idStr);
-                handleGetCustomer(id, response);
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            }
+            handleGetCustomer(idStr, response);
         }
     }
 
     private void handleGetAllCustomers(HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            List<Customer> customers = customerService.getAllCustomers();
+//            List<Customer> customers = customerService.getAllCustomers();
+            List<Customer> customers = customerService.getAll();
+
+            List<CustomerDTO> customersMasked = new ArrayList<>();
+            if(customers != null) for(Customer c : customers) customersMasked.add(CustomerDTO.mask(c));
+
             json.addProperty("status", "success");
             json.addProperty("message", "Customers retrieved successfully");
-            json.add("customers", gson.toJsonTree(customers));
+            json.add("customers", gson.toJsonTree(customersMasked));
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception e) {
             json.addProperty("status", "error");
@@ -55,21 +61,38 @@ public class CustomerServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
-    private void handleGetCustomer(int id, HttpServletResponse response) throws IOException {
+    private void handleGetCustomer(String id, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            Customer customer = customerService.getCustomerById(id);
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.CUSTOMER);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
+            CustomerDTO customerDTO = new CustomerDTO(new PartyDTO.Builder().id(id));
+            Customer customerUnmasked = Customer.unMask(customerDTO);
+
+            Customer customer = customerService.getPartyById(customerUnmasked.getId());
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
             if (customer != null) {
+
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer found");
-                json.add("customer", gson.toJsonTree(customer));
+                json.add("customer", gson.toJsonTree(customerDTOMasked));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "not_found");
                 json.addProperty("message", "Customer not found for ID: " + id);
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Customer ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }   catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Error processing request");
             json.addProperty("error", e.getMessage());
@@ -93,10 +116,25 @@ public class CustomerServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
-            if (customerService.createCustomer(customerDTO)) {
+
+            Customer customerUnMasked = Customer.unMask(customerDTO);
+
+            CustomerService cs = new CustomerService();
+            Map<String, String> errors = cs.validate(customerUnMasked);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
+            Customer customer = customerService.createParty(customerUnMasked);
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
+            if (customerDTO != null) {
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer created!");
+                json.add("customer", gson.toJsonTree(customerDTOMasked));
             } else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 json.addProperty("status", "error");
@@ -122,35 +160,53 @@ public class CustomerServlet extends HttpServlet {
             return;
         }
 
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            return;
-        }
+        String id = pathInfo.substring(1);
 
         JsonObject json = new JsonObject();
         try {
-            Customer customer = gson.fromJson(request.getReader(), Customer.class);
-            if (customer == null) {
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.CUSTOMER);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
+            CustomerDTO customerDTO = gson.fromJson(request.getReader(), CustomerDTO.class);
+            // Ensure customer ID matches path ID
+            customerDTO.setId(id);
+
+            Customer customerUnMasked = Customer.unMask(customerDTO);
+            if (customerDTO == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
                 return;
             }
-            // Ensure customer ID matches path ID
-            customer.setId(id);
 
-            if (customerService.updateCustomer(customer)) {
+            CustomerService cs = new CustomerService();
+            Map<String, String> errors = cs.validate(customerUnMasked);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
+            Customer customer = customerService.updateParty(customerUnMasked);
+
+            CustomerDTO customerDTOMasked = CustomerDTO.mask(customer);
+            if (customerDTOMasked != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer updated successfully");
+                json.add("customer",gson.toJsonTree(customerDTOMasked));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
                 json.addProperty("message", "Customer not found or no fields to update");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Customer ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }  catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process customer update");
             json.addProperty("error", e.getMessage());
@@ -171,27 +227,35 @@ public class CustomerServlet extends HttpServlet {
             return;
         }
 
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID format");
-            return;
-        }
-
         JsonObject json = new JsonObject();
+
         try {
-            if (customerService.deleteCustomer(id)) {
+            String id = pathInfo.substring(1);
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.CUSTOMER);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
+            CustomerDTO customerDTO = new CustomerDTO(new PartyDTO.Builder().id(id));
+            Customer customerUnmasked = Customer.unMask(customerDTO);
+
+            if (customerService.deleteCustomer(customerUnmasked.getId())) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Customer deleted successfully");
+                json.addProperty("customer_id", id);
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
                 json.addProperty("message", "Customer with given ID not found");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-        } catch (Exception e) {
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Customer ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }  catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process deletion");
             json.addProperty("error", e.getMessage());

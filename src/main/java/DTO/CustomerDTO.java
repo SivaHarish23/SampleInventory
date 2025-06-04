@@ -1,49 +1,26 @@
 package DTO;
 
-public class CustomerDTO {
-    private int id;
-    private String name;
-    private String location;
+import DTO.PartyDTO;
+import Model.Customer;
+import Model.Party;
+import Util.TimeUtil;
 
-    public CustomerDTO() {
+public class CustomerDTO extends PartyDTO {
+    public CustomerDTO(PartyDTO.Builder builder) {
+        super(builder);
+//        this.setType(Type.CUSTOMER);  // override or enforce the type here
     }
 
-    public CustomerDTO(int id, String name, String location) {
-        this.id = id;
-        this.name = name;
-        this.location = location;
-    }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    @Override
-    public String toString() {
-        return "CustomerDTO{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", location='" + location + '\'' +
-                '}';
+    public static CustomerDTO mask(Customer customer){
+        return new CustomerDTO(
+                new PartyDTO.Builder()
+                        .id((customer.getId() != null) ? "CUS-" + customer.getId() : null)
+                        .name(customer.getName())
+                        .location(customer.getLocation())
+                        .phone_number(customer.getPhoneNumber())
+                        .created_at((customer.getCreatedAt()!=null) ? TimeUtil.epochToString(customer.getCreatedAt()) : null)
+                        .updated_at((customer.getUpdatedAt()!=null) ? TimeUtil.epochToString(customer.getUpdatedAt()) : null)
+        );
     }
 }

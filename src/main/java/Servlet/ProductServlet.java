@@ -4,41 +4,39 @@ import DTO.ProductDTO;
 import DTO.ProductUpdateDTO;
 import Model.Product;
 import Service.ProductService;
+import Util.PrefixValidator;
+import Validators.ProductValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
+import java.util.Map;
 
 @WebServlet("/products/*")
 public class ProductServlet extends HttpServlet {
 
     private final ProductService productService = new ProductService();
+    private final ProductValidator productValidator = new ProductValidator();
     private final Gson gson = new Gson();
 
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String pathInfo = request.getPathInfo(); // e.g. / or /{id}
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            // GET /products -> get all products
+            // GET /products – Retrieve all products
             handleGetAllProducts(response);
         } else {
             // GET /products/{id}
-            String idStr = pathInfo.substring(1); // remove leading '/'
-            try {
-                int id = Integer.parseInt(idStr);
-                handleGetProduct(id, response);
-            } catch (NumberFormatException e) {
-                sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format");
-            }
+            String id = pathInfo.substring(1); // remove leading '/'
+            handleGetProduct(id, response);
         }
     }
 
@@ -46,9 +44,14 @@ public class ProductServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             List<Product> products = productService.getAllProducts();
+
+            List<ProductDTO> maskedProducts = new ArrayList<>();
+
+            if(products != null) for(Product p : products) maskedProducts.add(new ProductDTO(p));
+
             json.addProperty("status", "success");
             json.addProperty("message", "Products retrieved successfully");
-            json.add("products", gson.toJsonTree(products));
+            json.add("products", gson.toJsonTree(maskedProducts));
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception e) {
             json.addProperty("status", "error");
@@ -59,20 +62,37 @@ public class ProductServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
-    private void handleGetProduct(int id, HttpServletResponse response) throws IOException {
+    private void handleGetProduct(String id, HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-            Product product = productService.getProductById(id);
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(id , PrefixValidator.EntityType.PRODUCT);
+            if (error != null){
+                System.out.println("ProductId Validation failed: " + error);
+                throw new NumberFormatException(error);
+            }
+
+            ProductDTO dto = new ProductDTO.Builder().id(id).build();
+            Product productModel = new Product(dto);
+
+            Product product = productService.getProductById(productModel.getId());
+
+            ProductDTO maskedProduct = new ProductDTO(product);
             if (product != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Product found");
-                json.add("product", gson.toJsonTree(product));
+                json.add("product", gson.toJsonTree(maskedProduct));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "not_found");
                 json.addProperty("message", "Product not found for ID: " + id);
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Product ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Error processing request");
@@ -82,13 +102,13 @@ public class ProductServlet extends HttpServlet {
         writeResponse(response, json);
     }
 
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // POST /products - create new product
+        // POST /products – Create new product
         response.setContentType("application/json");
         String pathInfo = request.getPathInfo();
 
         if (pathInfo != null && !pathInfo.equals("/")) {
-            // POST should be on /products only
             sendError(response, HttpServletResponse.SC_NOT_FOUND, "Invalid endpoint");
             return;
         }
@@ -96,28 +116,37 @@ public class ProductServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             ProductDTO productDTO = gson.fromJson(request.getReader(), ProductDTO.class);
-            if (productService.addProduct(productDTO)) {
-                response.setStatus(HttpServletResponse.SC_CREATED);
+
+            Map<String, String> errors = productValidator.validate(productDTO);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
+            Product unMaskedProduct = new Product(productDTO);
+            Product savedProduct = productService.addProduct(unMaskedProduct);
+
+            ProductDTO maskedProductDTO = new ProductDTO(savedProduct);
+            if (maskedProductDTO != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Product created!");
+                json.add("product", gson.toJsonTree(maskedProductDTO));
+                response.setStatus(HttpServletResponse.SC_CREATED);
             } else {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 json.addProperty("status", "error");
-                json.addProperty("message", "Failed to create product!");
+                json.addProperty("message", "Failed to create product");
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
-        } catch (SQLException e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            json.addProperty("status", "error");
-            json.addProperty("message", "Database error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println(e);
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             json.addProperty("status", "error");
             json.addProperty("message", "Invalid input: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         writeResponse(response, json);
     }
+
 
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // PUT /products/{id} - update product by id
@@ -129,34 +158,52 @@ public class ProductServlet extends HttpServlet {
             return;
         }
 
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format");
-            return;
-        }
-
         JsonObject json = new JsonObject();
         try {
-            ProductUpdateDTO dto = gson.fromJson(request.getReader(), ProductUpdateDTO.class);
-            if (dto == null) {
+            String idStr = pathInfo.substring(1);
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(idStr , PrefixValidator.EntityType.PRODUCT);
+            if (error != null){
+                System.out.println("ProductId Validation failed: " + error);
+                throw new NumberFormatException(error);
+            }
+
+            ProductDTO dto = gson.fromJson(request.getReader(), ProductDTO.class);
+
+            ProductService ps = new ProductService();
+            Map<String, String> errors = productValidator.validateForUpdate(dto);
+            if (!errors.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400
+                gson.toJson(Collections.singletonMap("errors", errors), response.getWriter());
+                return;
+            }
+
+            // Ensure DTO id matches path id
+            dto.setId(idStr);
+            Product unMaskedProduct = new Product(dto);
+            if (unMaskedProduct == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
                 return;
             }
-            // Ensure DTO id matches path id
-            dto.setId(id);
 
-            if (productService.updateProduct(dto)) {
+            Product updatedProductDTO = productService.updateProduct(unMaskedProduct);
+
+            ProductDTO maskedProductDTO = new ProductDTO(updatedProductDTO);
+            if (maskedProductDTO != null) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Product updated successfully");
+                json.add("product" , gson.toJsonTree(maskedProductDTO));
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
                 json.addProperty("message", "Product not found or no fields to update");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Product ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process update");
@@ -166,6 +213,7 @@ public class ProductServlet extends HttpServlet {
 
         writeResponse(response, json);
     }
+
 
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // DELETE /products/{id} - delete product by id
@@ -177,26 +225,38 @@ public class ProductServlet extends HttpServlet {
             return;
         }
 
-        String idStr = pathInfo.substring(1);
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format");
-            return;
-        }
+
 
         JsonObject json = new JsonObject();
         try {
-            if (productService.deleteProduct(id)) {
+            String idStr = pathInfo.substring(1);
+            PrefixValidator validator = new PrefixValidator();
+            String error = validator.validatePrefixedId(idStr , PrefixValidator.EntityType.PRODUCT);
+            if (error != null){
+                throw new NumberFormatException(error);
+            }
+
+            ProductDTO dto = new ProductDTO.Builder().id(idStr).build();
+            Product productModel = new Product(dto);
+            if (productService.deleteProduct(productModel.getId())) {
                 json.addProperty("status", "success");
                 json.addProperty("message", "Product deleted successfully");
+                json.addProperty("product_id", idStr);
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 json.addProperty("status", "error");
-                json.addProperty("message", "Product with given id not found");
+                json.addProperty("message", "Product not found for ID: " + idStr);
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
+        }catch (NumberFormatException e) {
+            json.addProperty("status", "error");
+            json.addProperty("message", "Invalid Product ID");
+            json.addProperty("error", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }catch (IllegalStateException e) {
+            response.setStatus(HttpServletResponse.SC_CONFLICT);
+            response.setContentType("application/json");
+            gson.toJson(Collections.singletonMap("error", e.getMessage()), response.getWriter());
         } catch (Exception e) {
             json.addProperty("status", "error");
             json.addProperty("message", "Failed to process deletion");
