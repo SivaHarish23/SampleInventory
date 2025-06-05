@@ -4,7 +4,7 @@ import DAO.PurchaseBillDAO;
 import DAO.SalesInvoiceDAO;
 import DTO.StockAvailablityReportDTO;
 import DTO.StockValueDTO;
-import Model.StockAvailablityReport;
+import Model.StockAvailabilityReport;
 import Service.StockService;
 import Util.PrefixValidator;
 import com.google.gson.Gson;
@@ -75,9 +75,9 @@ public class ReportServlet extends HttpServlet {
         JsonObject json = new JsonObject();
         try {
             if (productIdParam == null) {
-                List<StockAvailablityReport> availabilityList = stockService.getOverallStockAvailability();
+                List<StockAvailabilityReport> availabilityList = stockService.getOverallStockAvailability();
                 List<StockAvailablityReportDTO> maskedList = new ArrayList<>();
-                for (StockAvailablityReport r : availabilityList) maskedList.add(new StockAvailablityReportDTO(r));
+                for (StockAvailabilityReport r : availabilityList) maskedList.add(new StockAvailablityReportDTO(r));
                 json.addProperty("status", "success");
                 json.add("stock_available", gson.toJsonTree(maskedList));
             } else {
@@ -87,7 +87,7 @@ public class ReportServlet extends HttpServlet {
                     throw new NumberFormatException(error);
                 }
                 int productId = Integer.parseInt(productIdParam.substring(4));
-                StockAvailablityReport dto = stockService.getStockAvailability(productId);
+                StockAvailabilityReport dto = stockService.getStockAvailability(productId);
                 StockAvailablityReportDTO masked = new StockAvailablityReportDTO(dto);
                 json.addProperty("status", "success");
                 json.add("stock_available", gson.toJsonTree(masked));
@@ -139,7 +139,6 @@ public class ReportServlet extends HttpServlet {
             json.addProperty("message", "Invalid product ID format.");
             json.addProperty("error", e.getMessage());
             e.printStackTrace();
-//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID format.");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -171,7 +170,6 @@ public class ReportServlet extends HttpServlet {
             json.addProperty("message", "Invalid vendor ID format.");
             json.addProperty("error", e.getMessage());
             e.printStackTrace();
-//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid vendor_id format");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -202,7 +200,6 @@ public class ReportServlet extends HttpServlet {
             json.addProperty("message", "Invalid customer ID format.");
             json.addProperty("error", e.getMessage());
             e.printStackTrace();
-//            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid customer_id format");
         } catch (SQLException e) {
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
         } catch (Exception e) {
@@ -210,37 +207,6 @@ public class ReportServlet extends HttpServlet {
         }
     }
 
-//    private void handleReceivedBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//        String from = request.getParameter("from");
-//        String to = request.getParameter("to");
-//        JsonObject json = new JsonObject();
-//
-//        try {
-//            json.addProperty("status", "success");
-//            json.add("data", gson.toJsonTree(purchaseBillDAO.getProductsReceivedBetween(from, to)));
-//            writeResponse(response, json);
-//        } catch (SQLException e) {
-//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
-//        } catch (Exception e) {
-//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
-//        }
-//    }
-//
-//    private void handleDeliveredBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//        String from = request.getParameter("from");
-//        String to = request.getParameter("to");
-//        JsonObject json = new JsonObject();
-//
-//        try {
-//            json.addProperty("status", "success");
-//            json.add("data", gson.toJsonTree(salesInvoiceDAO.getProductsDeliveredBetween(from, to)));
-//            writeResponse(response, json);
-//        } catch (SQLException e) {
-//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
-//        } catch (Exception e) {
-//            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unexpected error: " + e.getMessage());
-//        }
-//    }
     private void handleReceivedBetween(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String from = request.getParameter("from");
         String to = request.getParameter("to");

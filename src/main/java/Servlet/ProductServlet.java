@@ -7,7 +7,6 @@ import Util.PrefixValidator;
 import Validators.ProductValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;

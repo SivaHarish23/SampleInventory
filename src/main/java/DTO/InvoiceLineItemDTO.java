@@ -3,7 +3,6 @@ package DTO;
 import Model.InvoiceLineItem;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 public class InvoiceLineItemDTO {
     private String id;

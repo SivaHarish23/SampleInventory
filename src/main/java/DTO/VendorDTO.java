@@ -1,13 +1,12 @@
 package DTO;
 
-import DTO.PartyDTO;
 import Model.Vendor;
 import Util.TimeUtil;
 
 public class VendorDTO extends PartyDTO {
     public VendorDTO(PartyDTO.Builder builder) {
         super(builder);
-//        this.setType(PartyDTO.Type.VENDOR);  // override or enforce the type here
+//        this.setType(PartyDTO.Type.VENDOR);  // not here, but in MODEL.
     }
     public static VendorDTO mask(Vendor vendor){
         return new VendorDTO(

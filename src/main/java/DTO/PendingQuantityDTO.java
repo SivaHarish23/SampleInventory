@@ -2,7 +2,6 @@ package DTO;
 
 public class PendingQuantityDTO {
 
-
     private String customer_id;
     private String customer_name;
     private String vendor_id;

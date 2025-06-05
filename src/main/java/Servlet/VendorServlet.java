@@ -3,12 +3,10 @@ package Servlet;
 import DTO.VendorDTO;
 import DTO.PartyDTO;
 import Model.Vendor;
-import Service.CustomerService;
 import Service.VendorService;
 import Util.PrefixValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
@@ -42,7 +40,6 @@ public class VendorServlet extends HttpServlet {
     private void handleGetAllVendors(HttpServletResponse response) throws IOException {
         JsonObject json = new JsonObject();
         try {
-//            List<Vendor> vendors = vendorService.getAllVendors();
             List<Vendor> vendors = vendorService.getAll();
 
             List<VendorDTO> vendorsMasked = new ArrayList<>();
@@ -170,7 +167,6 @@ public class VendorServlet extends HttpServlet {
             }
 
             VendorDTO vendorDTO = gson.fromJson(request.getReader(), VendorDTO.class);
-            // Ensure vendor ID matches path ID
             vendorDTO.setId(id);
 
             Vendor vendorUnMasked = Vendor.unMask(vendorDTO);

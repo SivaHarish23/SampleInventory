@@ -1,14 +1,12 @@
 package DTO;
 
-import DTO.PartyDTO;
 import Model.Customer;
-import Model.Party;
 import Util.TimeUtil;
 
 public class CustomerDTO extends PartyDTO {
     public CustomerDTO(PartyDTO.Builder builder) {
         super(builder);
-//        this.setType(Type.CUSTOMER);  // override or enforce the type here
+//        this.setType(Type.CUSTOMER);  //  not here, but in MODEL.
     }
 
 

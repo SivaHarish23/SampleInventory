@@ -8,7 +8,6 @@ import java.util.*;
 
 public class BillLineItemDAO {
 
-
     public BillLineItem createBillItem(BillLineItem dto, Connection conn) throws SQLException {
         String sql = "INSERT INTO bill_line_items (bill_id, product_id, quantity, rate, amount) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

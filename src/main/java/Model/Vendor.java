@@ -1,6 +1,5 @@
 package Model;
 
-import DTO.CustomerDTO;
 import DTO.VendorDTO;
 import Util.TimeUtil;
 

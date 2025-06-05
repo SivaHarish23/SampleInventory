@@ -1,16 +1,11 @@
 package Service;
 
-import DAO.BillLineItemDAO;
-import DAO.ProductDAO;
 import DAO.PurchaseBillDAO;
-import DAO.VendorDAO;
 import DTO.PurchaseBillDTO;
 import Model.BillLineItem;
 import Model.PurchaseBill;
-import Model.SalesInvoice;
 import Util.DBConnection;
 import Validators.PurchaseBillValidator;
-
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -1,10 +1,7 @@
 package DAO;
 
-import DTO.ProductDTO;
-import DTO.PurchaseBillDTO;
 import Model.Product;
 import Util.DBConnection;
-import Util.TimeUtil;
 
 import java.sql.*;
 import java.time.Instant;

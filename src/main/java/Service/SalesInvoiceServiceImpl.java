@@ -5,7 +5,7 @@ import DTO.InsufficientStockDTO;
 import DTO.SalesInvoiceDTO;
 import Model.InvoiceLineItem;
 import Model.SalesInvoice;
-import Model.StockAvailablityReport;
+import Model.StockAvailabilityReport;
 import Util.DBConnection;
 import Validators.SalesInvoiceValidator;
 
@@ -30,7 +30,7 @@ public class SalesInvoiceServiceImpl implements SalesInvoiceService{
         try{
             List<InsufficientStockDTO> list = new ArrayList<>();
             for (InvoiceLineItem item : items) {
-                StockAvailablityReport report = stockService.getStockAvailability(item.getProduct_id());
+                StockAvailabilityReport report = stockService.getStockAvailability(item.getProduct_id());
                 if (report.getStock_on_hand() < item.getQuantity()) {
                     InsufficientStockDTO isd = new InsufficientStockDTO(
                             "PRO-" + report.getProduct_id(),

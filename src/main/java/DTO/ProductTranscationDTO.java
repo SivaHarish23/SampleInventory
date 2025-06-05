@@ -9,6 +9,7 @@ public class ProductTranscationDTO {
     private String product_name;
     private Integer quantity;
     private String bill_date;
+    private String invoice_date;
 
     private BigDecimal stock_value;
 
@@ -51,7 +52,15 @@ public class ProductTranscationDTO {
     }
 
     public void setBill_date(String bill_date) {
-        this.bill_date = bill_date;
+        this.bill_date = bill_date.substring(0,10);
+    }
+
+    public String getInvoice_date() {
+        return invoice_date;
+    }
+
+    public void setInvoice_date(String invoice_date) {
+        this.invoice_date = invoice_date.substring(0,10);
     }
 
     public BigDecimal getStock_value() {

@@ -213,7 +213,7 @@ public class SalesInvoiceServlet extends HttpServlet {
             if (salesInvoiceService.isDelivered(Integer.parseInt(idstr.substring(4)))) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
                 json.addProperty("status", "forbidden");
-                json.addProperty("message", "Cannot modify a delivered sales invoice.");
+                json.addProperty("message", "Cannot modify a delivered sales invoice : " + idstr);
                 writeResponse(response, json);
                 return;
             }

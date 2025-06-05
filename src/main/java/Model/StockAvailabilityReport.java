@@ -2,33 +2,33 @@ package Model;
 
 import DTO.StockAvailablityReportDTO;
 
-public class StockAvailablityReport {
+public class StockAvailabilityReport {
 
     private Integer product_id;
     private String product_name;
     private Integer ordered_stock;
-    private Integer quatity_in;
-    private Integer quatity_out;
+    private Integer quantity_in;
+    private Integer quantity_out;
     private Integer committed_stock;
     private Integer stock_on_hand;
 
-    public StockAvailablityReport(StockAvailablityReportDTO stock){
+    public StockAvailabilityReport(StockAvailablityReportDTO stock){
         this.product_id = Integer.parseInt(stock.getProduct_id().substring(4));
         this.product_name = stock.getProduct_name();
         this.ordered_stock = stock.getOrdered_stock();
-        this.quatity_in = stock.getQuatity_in();
-        this.quatity_out = stock.getQuatity_out();
+        this.quantity_in = stock.getQuatity_in();
+        this.quantity_out = stock.getQuatity_out();
         this.committed_stock = stock.getCommitted_stock();
         this.stock_on_hand = stock.getStock_on_hand();
     }
 
     // Private constructor
-    private StockAvailablityReport(Builder builder) {
+    private StockAvailabilityReport(Builder builder) {
         this.product_id = builder.product_id;
         this.product_name = builder.product_name;
         this.ordered_stock = builder.ordered_stock;
-        this.quatity_in = builder.quatity_in;
-        this.quatity_out = builder.quatity_out;
+        this.quantity_in = builder.quantity_in;
+        this.quantity_out = builder.quantity_out;
         this.committed_stock = builder.committed_stock;
         this.stock_on_hand = builder.stock_on_hand;
     }
@@ -38,8 +38,8 @@ public class StockAvailablityReport {
         private Integer product_id;
         private String product_name;
         private Integer ordered_stock;
-        private Integer quatity_in;
-        private Integer quatity_out;
+        private Integer quantity_in;
+        private Integer quantity_out;
         private Integer committed_stock;
         private Integer stock_on_hand;
 
@@ -59,12 +59,12 @@ public class StockAvailablityReport {
         }
 
         public Builder quantityIn(Integer quatity_in) {
-            this.quatity_in = quatity_in;
+            this.quantity_in = quatity_in;
             return this;
         }
 
         public Builder quantityOut(Integer quatity_out) {
-            this.quatity_out = quatity_out;
+            this.quantity_out = quatity_out;
             return this;
         }
 
@@ -78,8 +78,8 @@ public class StockAvailablityReport {
             return this;
         }
 
-        public StockAvailablityReport build() {
-            return new StockAvailablityReport(this);
+        public StockAvailabilityReport build() {
+            return new StockAvailabilityReport(this);
         }
     }
 
@@ -110,20 +110,20 @@ public class StockAvailablityReport {
         this.ordered_stock = ordered_stock;
     }
 
-    public Integer getQuatity_in() {
-        return quatity_in;
+    public Integer getQuantity_in() {
+        return quantity_in;
     }
 
-    public void setQuatity_in(Integer quatity_in) {
-        this.quatity_in = quatity_in;
+    public void setQuantity_in(Integer quantity_in) {
+        this.quantity_in = quantity_in;
     }
 
-    public Integer getQuatity_out() {
-        return quatity_out;
+    public Integer getQuantity_out() {
+        return quantity_out;
     }
 
-    public void setQuatity_out(Integer quatity_out) {
-        this.quatity_out = quatity_out;
+    public void setQuantity_out(Integer quantity_out) {
+        this.quantity_out = quantity_out;
     }
 
     public Integer getCommitted_stock() {

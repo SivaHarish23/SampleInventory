@@ -1,7 +1,6 @@
 package DTO;
 
 import Model.InvoiceLineItem;
-import Model.InvoiceLineItem;
 import Model.SalesInvoice;
 import Model.SalesInvoiceStatus;
 import Util.TimeUtil;
@@ -23,7 +22,7 @@ public class SalesInvoiceDTO {
 
     public SalesInvoiceDTO(SalesInvoice salesInvoice){
         this.id = (salesInvoice.getId()!=null) ? "INV-" + salesInvoice.getId() : null;
-        this.invoice_date = (salesInvoice.getInvoice_date()!=null) ? TimeUtil.epochToString(salesInvoice.getInvoice_date()) : null;
+        this.invoice_date = (salesInvoice.getInvoice_date()!=null) ? TimeUtil.epochToString(salesInvoice.getInvoice_date()).substring(0,10) : null;
         this.customer_id = (salesInvoice.getCustomer_id()!=null) ? "CUS-" + salesInvoice.getCustomer_id() : null;
         this.amount = salesInvoice.getAmount();
         this.status = (salesInvoice.getStatus()!=null) ? SalesInvoiceStatus.getString(salesInvoice.getStatus()) : null;

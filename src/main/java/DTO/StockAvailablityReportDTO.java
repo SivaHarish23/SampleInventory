@@ -1,6 +1,6 @@
 package DTO;
 
-import Model.StockAvailablityReport;
+import Model.StockAvailabilityReport;
 
 public class StockAvailablityReportDTO {
 
@@ -12,12 +12,12 @@ public class StockAvailablityReportDTO {
     private Integer committed_stock;
     private Integer stock_on_hand;
 
-    public StockAvailablityReportDTO(StockAvailablityReport stock){
+    public StockAvailablityReportDTO(StockAvailabilityReport stock){
         this.product_id = "PRO-" + stock.getProduct_id();
         this.product_name = stock.getProduct_name();
         this.ordered_stock = stock.getOrdered_stock();
-        this.quantity_in = stock.getQuatity_in();
-        this.quantity_out = stock.getQuatity_out();
+        this.quantity_in = stock.getQuantity_in();
+        this.quantity_out = stock.getQuantity_out();
         this.committed_stock = stock.getCommitted_stock();
         this.stock_on_hand = stock.getStock_on_hand();
     }
@@ -149,5 +149,4 @@ public class StockAvailablityReportDTO {
         this.stock_on_hand = stock_on_hand;
     }
 
-    // Optional: Add getters or toString() if required
 }

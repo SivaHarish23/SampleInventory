@@ -174,11 +174,11 @@ public class CustomerServlet extends HttpServlet {
             // Ensure customer ID matches path ID
             customerDTO.setId(id);
 
-            Customer customerUnMasked = Customer.unMask(customerDTO);
             if (customerDTO == null) {
                 sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request body");
                 return;
             }
+            Customer customerUnMasked = Customer.unMask(customerDTO);
 
             CustomerService cs = new CustomerService();
             Map<String, String> errors = cs.validate(customerUnMasked);

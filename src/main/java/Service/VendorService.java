@@ -1,7 +1,6 @@
 package Service;
 
 import DAO.VendorDAO;
-import DTO.VendorDTO;
 import Model.Vendor;
 
 import java.sql.SQLException;
