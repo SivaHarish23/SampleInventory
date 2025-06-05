@@ -7,8 +7,7 @@ import DAO.StockReportDAO;
 import DTO.PurchaseEntryDTO;
 import DTO.StockValueDTO;
 import Model.Product;
-import Model.StockAvailablityReport;
-
+import Model.StockAvailabilityReport;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,16 +16,15 @@ import java.util.List;
 public class StockService {
 
     private final ProductDAO productDAO = new ProductDAO();
-
     private final StockReportDAO stockReportDAO = new StockReportDAO();
     private final PurchaseBillDAO purchaseBillDAO = new PurchaseBillDAO();
     private final SalesInvoiceDAO salesInvoiceDAO = new SalesInvoiceDAO();
 
-    public List<StockAvailablityReport> getOverallStockAvailability () throws SQLException{
+    public List<StockAvailabilityReport> getOverallStockAvailability () throws SQLException{
         return stockReportDAO.getOverallStockAvailablity();
     }
 
-    public StockAvailablityReport getStockAvailability (Integer pid) throws SQLException{
+    public StockAvailabilityReport getStockAvailability (Integer pid) throws SQLException{
         return stockReportDAO.getStockAvailablity(pid);
     }
 

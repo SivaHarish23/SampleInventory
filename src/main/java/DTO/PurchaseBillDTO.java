@@ -25,7 +25,7 @@ public class PurchaseBillDTO {
 
     public PurchaseBillDTO(PurchaseBill purchaseBill){
         this.id = (purchaseBill.getId()!=null) ? "BIL-" + purchaseBill.getId() : null;
-        this.bill_date = (purchaseBill.getBill_date()!=null) ? TimeUtil.epochToString(purchaseBill.getBill_date()) : null;
+        this.bill_date = (purchaseBill.getBill_date()!=null) ? TimeUtil.epochToString(purchaseBill.getBill_date()).substring(0,10) : null;
         this.vendor_id = (purchaseBill.getVendor_id()!=null) ? "VEN-" + purchaseBill.getVendor_id() : null;
         this.amount = purchaseBill.getAmount();
         this.status = (purchaseBill.getStatus()!=null) ? PurchaseBillStatus.getString(purchaseBill.getStatus()) : null;

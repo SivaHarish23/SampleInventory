@@ -6,7 +6,6 @@ import Model.InvoiceLineItem;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.List;
 
 public class InvoiceLineItemServiceImpl implements InvoiceLineItemService {

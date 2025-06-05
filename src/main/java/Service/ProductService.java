@@ -4,7 +4,6 @@ import DAO.ProductDAO;
 import DTO.ProductDTO;
 import Model.Product;
 import Validators.ProductValidator;
-
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;

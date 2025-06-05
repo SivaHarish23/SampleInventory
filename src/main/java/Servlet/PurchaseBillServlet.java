@@ -9,7 +9,6 @@ import Validators.PurchaseBillValidator;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
@@ -138,18 +137,14 @@ public class PurchaseBillServlet extends HttpServlet {
                 json.add("duplicates", duplicateArray);
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 writeResponse(response, json);
-                return; // Stop further processing
+                return;
             }
 
             PurchaseBill insertedBill = purchaseBillService.createPurchaseBill(purchaseBillUnMasked);
             System.out.println(insertedBill.toString());
-//            for(BillLineItem bdto : insertedBill.getBill_line_items()) System.out.println(bdto.toString());
-//            System.out.println();
 
             PurchaseBillDTO maskedBill = new PurchaseBillDTO(insertedBill);
             System.out.println(maskedBill.toString());
-//            for(BillLineItemDTO bdto : maskedBill.getBillLineItems()) System.out.println(bdto.toString());
-//            System.out.println();
 
             response.setStatus(HttpServletResponse.SC_CREATED);
             json.addProperty("status", "success");
@@ -191,7 +186,7 @@ public class PurchaseBillServlet extends HttpServlet {
             if (purchaseBillService.isReceived(Integer.parseInt(idstr.substring(4)))) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
                 json.addProperty("status", "forbidden");
-                json.addProperty("message", "Cannot modify a received purchase bill.");
+                json.addProperty("message", "Cannot modify a received purchase bill : " + idstr);
                 writeResponse(response, json);
                 return;
             }

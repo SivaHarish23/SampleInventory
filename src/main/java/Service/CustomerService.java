@@ -1,9 +1,7 @@
 package Service;
 
 import DAO.CustomerDAO;
-import DTO.CustomerDTO;
 import Model.Customer;
-
 import java.sql.SQLException;
 
 public class CustomerService extends PartyService<Customer,CustomerDAO>{

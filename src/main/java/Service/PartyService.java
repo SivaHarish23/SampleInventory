@@ -1,11 +1,8 @@
 package Service;
 
-import DTO.PartyDTO;
 import DAO.PartyDAO;
-import DTO.ProductDTO;
 import Model.Party;
 import Validators.PartyValidator;
-import Validators.ProductValidator;
 
 import java.sql.SQLException;
 import java.util.List;

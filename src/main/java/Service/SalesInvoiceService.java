@@ -1,8 +1,6 @@
 package Service;
 
-import DTO.SalesInvoiceDTO;
 import Model.SalesInvoice;
-
 import java.sql.SQLException;
 import java.util.List;
 

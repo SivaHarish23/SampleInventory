@@ -12,7 +12,7 @@ import java.util.*;
 public class PurchaseBillDAO{
 
     public PurchaseBill createBill(PurchaseBill dto, Connection conn) throws SQLException {
-        // Omitted: insert bill and return created DTO with generated ID
+
         String sql = "INSERT INTO purchase_bills (bill_date, vendor_id, amount, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setLong(1,dto.getBill_date());

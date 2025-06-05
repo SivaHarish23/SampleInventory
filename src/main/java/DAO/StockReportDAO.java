@@ -1,10 +1,8 @@
 package DAO;
 
-import DTO.PurchaseEntryDTO;
-import Model.StockAvailablityReport;
+import Model.StockAvailabilityReport;
 import Util.DBConnection;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +12,7 @@ import java.util.List;
 
 public class StockReportDAO {
 
-    public List<StockAvailablityReport> getOverallStockAvailablity() throws SQLException {
+    public List<StockAvailabilityReport> getOverallStockAvailablity() throws SQLException {
         String query = "SELECT \n" +
                 "    p.id AS product_id,\n" +
                 "    p.name AS product_name,\n" +
@@ -73,7 +71,7 @@ public class StockReportDAO {
              PreparedStatement preparedStatement = conn.prepareStatement(query);
         ) {
             ResultSet rs = preparedStatement.executeQuery();
-            List<StockAvailablityReport> list = new ArrayList<>();
+            List<StockAvailabilityReport> list = new ArrayList<>();
             while (rs.next()) {
                 list.add(extract(rs));
             }
@@ -86,7 +84,7 @@ public class StockReportDAO {
     }
 
 
-    public StockAvailablityReport getStockAvailablity(Integer product_id) throws SQLException {
+    public StockAvailabilityReport getStockAvailablity(Integer product_id) throws SQLException {
         String query = "SELECT \n" +
                 "    p.id AS product_id,\n" +
                 "    p.name AS product_name,\n" +
@@ -158,9 +156,9 @@ public class StockReportDAO {
         }
     }
 
-    private StockAvailablityReport extract(ResultSet rs) throws SQLException {
+    private StockAvailabilityReport extract(ResultSet rs) throws SQLException {
 
-        return new StockAvailablityReport.Builder()
+        return new StockAvailabilityReport.Builder()
                 .productId(rs.getInt("product_id"))
                 .productName(rs.getString("product_name"))
                 .orderedStock(rs.getInt("ordered_stock"))

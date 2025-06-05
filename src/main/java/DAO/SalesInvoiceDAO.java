@@ -5,8 +5,6 @@ import DTO.ProductTranscationDTO;
 import Model.SalesInvoice;
 import Util.DBConnection;
 import Util.TimeUtil;
-
-import java.math.BigDecimal;
 import java.sql.*;
 import java.time.Instant;
 import java.util.*;
@@ -14,7 +12,7 @@ import java.util.*;
 public class SalesInvoiceDAO{
 
     public SalesInvoice createInvoice(SalesInvoice dto, Connection conn) throws SQLException {
-        // Omitted: insert invoice and return created DTO with generated ID
+
         String sql = "INSERT INTO sales_invoices (invoice_date, customer_id, amount, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setLong(1,dto.getInvoice_date());
@@ -209,7 +207,7 @@ public class SalesInvoiceDAO{
                 "    p.id AS product_id,\n" +
                 "    p.name AS product_name,\n" +
                 "    ili.quantity AS quantity,\n" +
-                "    si.invoice_date AS bill_date\n" +
+                "    si.invoice_date AS invoice_date\n" +
                 "FROM sales_invoices si\n" +
                 "JOIN invoice_line_items ili ON si.id = ili.invoice_id\n" +
                 "JOIN products p ON p.id = ili.product_id\n" +
@@ -227,7 +225,7 @@ public class SalesInvoiceDAO{
                 product.setProduct_id(rs.getInt("product_id")+"");
                 product.setProduct_name(rs.getString("product_name"));
                 product.setQuantity(rs.getInt("quantity"));
-                product.setBill_date(TimeUtil.epochToString(rs.getLong("bill_date")));
+                product.setInvoice_date(TimeUtil.epochToString(rs.getLong("invoice_date")));
 
                 list.add(product);
             }

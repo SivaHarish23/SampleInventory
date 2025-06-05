@@ -1,11 +1,8 @@
 package DAO;
 
-import DTO.PartyDTO;
-import DTO.VendorDTO;
 import Model.Party;
 import Model.Vendor;
 import Util.DBConnection;
-import Util.TimeUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
